@@ -1,0 +1,86 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  max-width: 600px;
+  margin: auto;
+}
+
+.book, .chapter {
+  border-bottom: 1px solid #ddd;
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.locked {
+  color: red;
+  font-weight: bold;
+}
+
+.unlocked {
+  color: green;
+}
+
+img {
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-right: 15px;
+}
+
+.book-card {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+.book-card:hover {
+  background-color: #f9f9f9;
+}
+
+.book-info {
+  flex: 1;
+}
+
+/* ✅ Back button */
+.back-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 999;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.back-button:hover {
+  background-color: #0056b3;
+}
+
+/* ✅ Home button (Back to Homepage) */
+.home-button {
+  position: fixed;
+  top: 70px;
+  left: 20px;
+  background-color: #ffc107;
+  color: black;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 999;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.home-button:hover {
+  background-color: #e0a800;
+}

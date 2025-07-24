@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Storybooks</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .book {
+      display: flex;
+      align-items: center;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .book img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      margin-right: 15px;
+      border-radius: 5px;
+    }
+    .book h2 {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>📚 My Storybooks</h1>
+  <div id="books"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://jkjfdgjgjpybnixqwiou.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadBooks() {
+      const { data: books, error } = await supabase.from('books').select('*');
+      const booksDiv = document.getElementById('books');
+      if (error) {
+        booksDiv.innerHTML = "<p>Error loading books.</p>";
+        return;
+      }
+
+      for (const book of books) {
+        const bookEl = document.createElement('div');
+        bookEl.className = "book";
+        bookEl.onclick = () => {
+          window.location.href = `book.html?id=${book.id}`;
+        };
+
+        bookEl.innerHTML = `
+          ${book.cover ? `<img src="${book.cover}" alt="Cover">` : '<img src="placeholder.jpg" alt="No Cover">'}
+          <div>
+            <h2>${book.title}</h2>
+            <p>${book.description || ''}</p>
+          </div>
+        `;
+        booksDiv.appendChild(bookEl);
+      }
+    }
+
+    loadBooks();
+  </script>
+</body>
+</html>

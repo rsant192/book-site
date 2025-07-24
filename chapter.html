@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chapter</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .locked {
+      color: red;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .chapter-content {
+      padding: 20px;
+      line-height: 1.7;
+      margin-bottom: 80px;
+    }
+    .back-button {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      padding: 10px 16px;
+      font-size: 16px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 999;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .back-button:hover {
+      background-color: #218838;
+    }
+    .chapter-list-button {
+      position: fixed;
+      top: 60px;
+      left: 10px;
+      padding: 10px 16px;
+      font-size: 16px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 999;
+    }
+    .home-button {
+      position: fixed;
+      top: 110px;
+      left: 10px;
+      padding: 10px 16px;
+      font-size: 16px;
+      background-color: #ffc107;
+      color: black;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 999;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .home-button:hover {
+      background-color: #e0a800;
+    }
+    .next-button {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      padding: 12px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+
+  <button class="back-button" onclick="history.back()">← Back</button>
+  <button id="chapterListBtn" class="chapter-list-button" style="display:none;">← Back to Chapter List</button>
+  <button class="home-button" onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
+
+  <div id="chapter-content" class="chapter-content"></div>
+
+  <button class="next-button" onclick="goToNextChapter()">Next Chapter →</button>
+
+  <script>
+    console.log("Loading chapter page...");
+
+    const SUPABASE_URL = 'https://jkjfdgjgjpybnixqwiou.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const chapterId = urlParams.get('id');
+    let currentChapterId = chapterId;
+
+    async function loadChapter() {
+      const { data: chapter, error } = await supabase
+        .from('chapters')
+        .select('*')
+        .eq('id', currentChapterId)
+        .single();
+
+      const container = document.getElementById('chapter-content');
+
+      if (error || !chapter) {
+        console.error("Error loading chapter:", error);
+        container.innerHTML = "<p>Error loading chapter.</p>";
+        return;
+      }
+
+      // Display chapter content
+      if (chapter.locked) {
+        container.innerHTML = `<p class="locked">🔒 This chapter is locked. Please unlock to read.</p>`;
+      } else {
+        container.innerHTML = `<h1>${chapter.title}</h1><p>${chapter.content}</p>`;
+      }
+
+      // Activate Chapter List button
+      const chapterListBtn = document.getElementById('chapterListBtn');
+      chapterListBtn.style.display = 'block';
+      chapterListBtn.onclick = () => {
+        window.location.href = `book.html?id=${chapter.book_id}`;
+      };
+    }
+
+    async function goToNextChapter() {
+      const { data: currentChapter, error: currentError } = await supabase
+        .from('chapters')
+        .select('chapter_number, book_id')
+        .eq('id', currentChapterId)
+        .single();
+
+      if (currentError || !currentChapter) {
+        alert("❌ Failed to get current chapter info.");
+        return;
+      }
+
+      const { chapter_number, book_id } = currentChapter;
+
+      const { data: nextChapters, error: nextError } = await supabase
+        .from('chapters')
+        .select('id')
+        .eq('book_id', book_id)
+        .gt('chapter_number', chapter_number)
+        .order('chapter_number', { ascending: true })
+        .limit(1);
+
+      if (nextError || !nextChapters || nextChapters.length === 0) {
+        alert("🚫 This is the last chapter.");
+        return;
+      }
+
+      const nextChapter = nextChapters[0];
+      window.location.href = `chapter.html?id=${nextChapter.id}`;
+    }
+
+    loadChapter();
+  </script>
+</body>
+</html>
