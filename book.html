@@ -42,39 +42,48 @@
 
   <h1>📖 Chapters</h1>
   <div id="chapters"></div>
+<script>
+  const supabase = supabase.createClient(
+    'https://jkjfdgjgjpybnixqwiou.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
+  );
 
-  <script>
-    const SUPABASE_URL = 'https://jkjfdgjgjpybnixqwiou.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  checkSession();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const bookId = urlParams.get('id');
+  async function checkSession() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = "auth.html"; // not logged in → redirect
+    } else {
+      loadChapters(); // logged in → load chapters
+    }
+  }
 
-    async function loadChapters() {
-      const { data: chapters, error } = await supabase
-        .from('chapters')
-        .select('*')
-        .eq('book_id', bookId);
+  const urlParams = new URLSearchParams(window.location.search);
+  const bookId = urlParams.get('id');
 
-      const chaptersDiv = document.getElementById('chapters');
-      if (error) {
-        chaptersDiv.innerHTML = "<p>Error loading chapters.</p>";
-        return;
-      }
+  async function loadChapters() {
+    const { data: chapters, error } = await supabase
+      .from('chapters')
+      .select('*')
+      .eq('book_id', bookId);
 
-      for (const ch of chapters) {
-        const chEl = document.createElement('div');
-        chEl.className = 'chapter-link';
-        chEl.onclick = () => {
-          window.location.href = `chapter.html?id=${ch.id}`;
-        };
-        chEl.textContent = `${ch.title}`;
-        chaptersDiv.appendChild(chEl);
-      }
+    const chaptersDiv = document.getElementById('chapters');
+    if (error) {
+      chaptersDiv.innerHTML = "<p>Error loading chapters.</p>";
+      return;
     }
 
-    loadChapters();
-  </script>
-</body>
+    for (const ch of chapters) {
+      const chEl = document.createElement('div');
+      chEl.className = 'chapter-link';
+      chEl.onclick = () => {
+        window.location.href = `chapter.html?id=${ch.id}`;
+      };
+      chEl.textContent = `${ch.title}`;
+      chaptersDiv.appendChild(chEl);
+    }
+  }
+</script>
+  </body>
 </html>

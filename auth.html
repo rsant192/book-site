@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login / Signup</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>🔐 Login or Sign Up</h1>
+
+  <input id="email" type="email" placeholder="Email" /><br /><br />
+  <input id="password" type="password" placeholder="Password" /><br /><br />
+
+  <button onclick="login()">Login</button>
+  <button onclick="signup()">Sign Up</button>
+  <p id="message"></p>
+
+  <script>
+    const supabase = supabase.createClient(
+      'https://jkjfdgjgjpybnixqwiou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
+    );
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      document.getElementById("message").textContent = error ? error.message : "✅ Login successful! Redirecting...";
+      if (!error) {
+        setTimeout(() => window.location.href = "index.html", 1500);
+      }
+    }
+
+    async function signup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const { error } = await supabase.auth.signUp({ email, password });
+      document.getElementById("message").textContent = error ? error.message : "✅ Signup successful! You can now login.";
+    }
+  </script>
+</body>
+</html>
