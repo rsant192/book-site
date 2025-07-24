@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Book Chapters</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="style.css">
   <style>
     .chapter-link {
@@ -34,6 +34,26 @@
     .home-button:hover {
       background-color: #e0a800;
     }
+
+    .back-button {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      padding: 10px 16px;
+      font-size: 16px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 999;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .back-button:hover {
+      background-color: #218838;
+    }
   </style>
 </head>
 <body>
@@ -42,48 +62,51 @@
 
   <h1>📖 Chapters</h1>
   <div id="chapters"></div>
-<script>
-  const client = supabase.createClient(
-    'https://jkjfdgjgjpybnixqwiou.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
-  );
 
-  checkSession();
+  <script>
+    const client = supabase.createClient(
+      'https://jkjfdgjgjpybnixqwiou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
+    );
 
-  async function checkSession() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      window.location.href = "auth.html"; // not logged in → redirect
-    } else {
-      loadChapters(); // logged in → load chapters
-    }
-  }
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookId = urlParams.get('id');
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const bookId = urlParams.get('id');
+    checkSession();
 
-  async function loadChapters() {
-    const { data: chapters, error } = await supabase
-      .from('chapters')
-      .select('*')
-      .eq('book_id', bookId);
-
-    const chaptersDiv = document.getElementById('chapters');
-    if (error) {
-      chaptersDiv.innerHTML = "<p>Error loading chapters.</p>";
-      return;
+    async function checkSession() {
+      const { data: { session } } = await client.auth.getSession();
+      if (!session) {
+        window.location.href = "auth.html";
+      } else {
+        loadChapters();
+      }
     }
 
-    for (const ch of chapters) {
-      const chEl = document.createElement('div');
-      chEl.className = 'chapter-link';
-      chEl.onclick = () => {
-        window.location.href = `chapter.html?id=${ch.id}`;
-      };
-      chEl.textContent = `${ch.title}`;
-      chaptersDiv.appendChild(chEl);
+    async function loadChapters() {
+      const { data: chapters, error } = await client
+        .from('chapters')
+        .select('*')
+        .eq('book_id', bookId)
+        .order('chapter_number', { ascending: true });
+
+      const chaptersDiv = document.getElementById('chapters');
+
+      if (error || !chapters || chapters.length === 0) {
+        chaptersDiv.innerHTML = '<p>No chapters found or error loading.</p>';
+        return;
+      }
+
+      for (const ch of chapters) {
+        const chEl = document.createElement('div');
+        chEl.className = 'chapter-link';
+        chEl.textContent = (ch.locked ? '🔒 ' : '📖 ') + ch.title;
+        chEl.onclick = () => {
+          window.location.href = `chapter.html?id=${ch.id}`;
+        };
+        chaptersDiv.appendChild(chEl);
+      }
     }
-  }
-</script>
-  </body>
+  </script>
+</body>
 </html>
