@@ -29,6 +29,23 @@
       font-style: italic;
       margin-top: 5px;
     }
+    .wallet-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #ffc107;
+      color: black;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 999;
+    }
+    .wallet-button:hover {
+      background-color: #e0a800;
+    }
   </style>
 </head>
 <body>
@@ -37,6 +54,9 @@
   <div id="auth-status">
     <button onclick="window.location.href='auth.html'">🔐 Login</button>
   </div>
+
+  <!-- Wallet button only appears if logged in -->
+  <button id="walletBtn" class="wallet-button" style="display: none;" onclick="window.location.href='wallet.html'">💰 Wallet</button>
 
   <div id="books"></div>
 
@@ -52,9 +72,11 @@
     async function checkSession() {
       const { data: { session }, error } = await supabase.auth.getSession();
       const authDiv = document.getElementById('auth-status');
+      const walletBtn = document.getElementById('walletBtn');
 
       if (session && session.user) {
         authDiv.innerHTML = '<p>✅ You are logged in</p>';
+        walletBtn.style.display = 'inline-block';
         localStorage.setItem('session', JSON.stringify(session));
       } else {
         const stored = localStorage.getItem('session');
@@ -66,6 +88,7 @@
           });
           if (data?.session?.user) {
             authDiv.innerHTML = '<p>✅ You are logged in</p>';
+            walletBtn.style.display = 'inline-block';
           }
         }
       }

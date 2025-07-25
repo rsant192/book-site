@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Wallet</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://www.paypal.com/sdk/js?client-id=Adh5XaLb51xEA-kSYj7nJvKHfdrdTu9tOITThsvTfUl-jqqcy_I8W4OHdrxseNAfzFKIEdbNLIcGxk0U"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .coin-balance {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .coin-package {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .coin-package button {
+      background-color: #ffc439;
+      border: none;
+      padding: 10px 18px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .coin-package button:hover {
+      background-color: #e0aa00;
+    }
+  </style>
+</head>
+<body>
+  <h1>💰 My Wallet</h1>
+  <div id="balance" class="coin-balance">Loading balance...</div>
+
+  <div class="coin-package">
+    <p>100 Coins - $1</p>
+    <div id="paypal-100"></div>
+  </div>
+
+  <div class="coin-package">
+    <p>200 Coins - $2</p>
+    <div id="paypal-200"></div>
+  </div>
+
+  <div class="coin-package">
+    <p>300 Coins - $3</p>
+    <div id="paypal-300"></div>
+  </div>
+
+  <div class="coin-package">
+    <p>500 Coins - $4 <span style="color:green">(Best Deal)</span></p>
+    <div id="paypal-500"></div>
+  </div>
+
+  <div class="coin-package">
+    <p>1000 Coins - $7</p>
+    <div id="paypal-1000"></div>
+  </div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://jkjfdgjgjpybnixqwiou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
+    );
+
+    let userId;
+
+    async function loadBalance() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !session.user) {
+        window.location.href = "auth.html";
+        return;
+      }
+
+      userId = session.user.id;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('coins')
+        .eq('id', userId)
+        .single();
+
+      if (error || !data) {
+        document.getElementById("balance").innerText = "Error loading balance.";
+      } else {
+        document.getElementById("balance").innerText = `🔸 You have ${data.coins || 0} coins`;
+      }
+    }
+
+    async function addCoins(amount) {
+      const { data, error } = await supabase.rpc('add_coins', {
+        user_id: userId,
+        coin_amount: amount
+      });
+
+      if (error) {
+        alert("❌ Failed to add coins. Please try again.");
+      } else {
+        alert(`✅ You received ${amount} coins!`);
+        loadBalance();
+      }
+    }
+
+    function setupPayPal(buttonId, coinAmount, price) {
+      paypal.Buttons({
+        style: {
+          layout: 'horizontal',
+          color: 'gold',
+          shape: 'pill',
+          label: 'paypal'
+        },
+        createOrder: function(data, actions) {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: price.toFixed(2)
+              }
+            }]
+          });
+        },
+        onApprove: function(data, actions) {
+          return actions.order.capture().then(function(details) {
+            addCoins(coinAmount);
+          });
+        }
+      }).render(`#paypal-${buttonId}`);
+    }
+
+    loadBalance();
+    setupPayPal('100', 100, 1);
+    setupPayPal('200', 200, 2);
+    setupPayPal('300', 300, 3);
+    setupPayPal('500', 500, 4);
+    setupPayPal('1000', 1000, 7);
+  </script>
+</body>
+</html>
