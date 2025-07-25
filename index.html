@@ -42,6 +42,7 @@
       font-weight: bold;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
       z-index: 999;
+      display: none;
     }
     .wallet-button:hover {
       background-color: #e0a800;
@@ -87,7 +88,7 @@
     <!-- Login or Logout buttons will go here -->
   </div>
 
-  <button id="walletBtn" class="wallet-button" style="display: none;" onclick="window.location.href='wallet.html'">💰 Wallet</button>
+  <button id="walletBtn" class="wallet-button" onclick="window.location.href='wallet.html'">💰 Wallet</button>
 
   <div id="books"></div>
 
@@ -97,47 +98,28 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
     );
 
+    let isLoggedIn = false;
+
     async function checkSessionAndLoadBooks() {
       const { data: { session } } = await supabase.auth.getSession();
       const authControls = document.getElementById('auth-controls');
       const walletBtn = document.getElementById('walletBtn');
 
       if (session && session.user) {
+        isLoggedIn = true;
         walletBtn.style.display = 'inline-block';
         authControls.innerHTML = `
           <p>✅ You are logged in</p>
           <button class="logout-btn" onclick="logout()">🚪 Logout</button>
         `;
         localStorage.setItem('session', JSON.stringify(session));
-        loadBooks();
       } else {
-        const stored = localStorage.getItem('session');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const { data, error } = await supabase.auth.setSession({
-            access_token: parsed.access_token,
-            refresh_token: parsed.refresh_token
-          });
-          if (data?.session?.user) {
-            walletBtn.style.display = 'inline-block';
-            authControls.innerHTML = `
-              <p>✅ You are logged in</p>
-              <button class="logout-btn" onclick="logout()">🚪 Logout</button>
-            `;
-            loadBooks();
-          } else {
-            authControls.innerHTML = `
-              <p>🔒 Please log in to see your books.</p>
-              <button class="login-btn" onclick="window.location.href='auth.html'">🔐 Log In</button>
-            `;
-          }
-        } else {
-          authControls.innerHTML = `
-            <p>🔒 Please log in to see your books.</p>
-            <button class="login-btn" onclick="window.location.href='auth.html'">🔐 Log In</button>
-          `;
-        }
+        authControls.innerHTML = `
+          <button class="login-btn" onclick="window.location.href='auth.html'">🔐 Log In</button>
+        `;
       }
+
+      loadBooks(); // ✅ Load books for both logged in and guest
     }
 
     async function logout() {
@@ -159,7 +141,11 @@
         const bookEl = document.createElement('div');
         bookEl.className = "book";
         bookEl.onclick = () => {
-          window.location.href = `book.html?id=${book.id}`;
+          if (isLoggedIn) {
+            window.location.href = `book.html?id=${book.id}`;
+          } else {
+            window.location.href = `auth.html`;
+          }
         };
 
         bookEl.innerHTML = `
