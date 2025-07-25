@@ -107,7 +107,7 @@
 
       if (session && session.user) {
         localStorage.setItem('session', JSON.stringify(session));
-        loadChapter();
+        setTimeout(loadChapter, 150); // ✅ slight delay to avoid fetch issue
       } else {
         const stored = localStorage.getItem('session');
         if (stored) {
@@ -118,7 +118,7 @@
           });
 
           if (data?.session?.user) {
-            loadChapter();
+            setTimeout(loadChapter, 150);
             return;
           }
         }
@@ -128,17 +128,17 @@
     }
 
     async function loadChapter() {
+      const container = document.getElementById('chapter-content');
+
       const { data: chapter, error } = await supabase
         .from('chapters')
         .select('*')
         .eq('id', currentChapterId)
         .single();
 
-      const container = document.getElementById('chapter-content');
-
       if (error || !chapter) {
         console.error("Error loading chapter:", error);
-        container.innerHTML = "<p>Error loading chapter.</p>";
+        container.innerHTML = "<p>❌ Error loading chapter. Please try again.</p>";
         return;
       }
 
@@ -148,7 +148,6 @@
         container.innerHTML = `<h1>${chapter.title}</h1><p>${chapter.content}</p>`;
       }
 
-      // Show back to chapter list button
       const chapterListBtn = document.getElementById('chapterListBtn');
       chapterListBtn.style.display = 'block';
       chapterListBtn.onclick = () => {

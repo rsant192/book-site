@@ -79,7 +79,7 @@
 
       if (session && session.user) {
         localStorage.setItem('session', JSON.stringify(session));
-        loadChapters();
+        setTimeout(loadChapters, 150); // 🔧 Add delay to stabilize loading
       } else {
         const stored = localStorage.getItem('session');
         if (stored) {
@@ -90,12 +90,13 @@
           });
 
           if (data?.session?.user) {
-            loadChapters();
+            setTimeout(loadChapters, 150);
             return;
           }
         }
 
-        window.location.href = "auth.html"; // if no valid session at all
+        // 🔁 Fallback: force reload if session fails
+        window.location.reload();
       }
     }
 
