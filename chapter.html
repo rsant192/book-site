@@ -105,7 +105,7 @@
   <script>
     const supabase = window.supabase.createClient(
       'https://jkjfdgjgjpybnixqwiou.supabase.co',
-      'YOUR-ANON-KEY'
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
     );
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -143,9 +143,9 @@
       const coinCost = chapter.coin_cost || 0;
 
       const { data: profile } = await supabase
-        .from("user_profiles")
+        .from("profiles")
         .select("coins")
-        .eq("user_id", userId)
+        .eq("id", userId)
         .single();
 
       const userCoins = profile?.coins || 0;
