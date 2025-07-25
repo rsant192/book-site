@@ -24,6 +24,11 @@
     .book h2 {
       margin: 0;
     }
+    .writer-notes {
+      color: #555;
+      font-style: italic;
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
@@ -87,6 +92,7 @@
           <div>
             <h2>${book.title}</h2>
             <p>${book.description || ''}</p>
+            ${book.writer_notes ? `<p class="writer-notes">✍️ ${book.writer_notes}</p>` : ''}
           </div>
         `;
         booksDiv.appendChild(bookEl);

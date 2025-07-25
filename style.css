@@ -120,3 +120,12 @@ img {
 .next-button:hover {
   background-color: #0056b3;
 }
+
+/* ✅ Writer Notes under description */
+.writer-notes {
+  font-style: italic;
+  color: #555;
+  margin-top: 6px;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
