@@ -16,210 +16,204 @@
       line-height: 1.7;
       margin-bottom: 80px;
     }
-    .back-button {
+    .back-button, .chapter-list-button, .home-button, .next-button {
       position: fixed;
+      padding: 10px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 999;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .back-button { top: 10px; left: 10px; background-color: #28a745; color: white; }
+    .chapter-list-button { top: 60px; left: 10px; background-color: #28a745; color: white; }
+    .home-button { top: 110px; left: 10px; background-color: #ffc107; color: black; }
+    .next-button { bottom: 10px; right: 10px; background-color: #007bff; color: white; border-radius: 6px; }
+    .back-button:hover { background-color: #218838; }
+    .home-button:hover { background-color: #e0a800; }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .modal {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      text-align: center;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
       top: 10px;
-      left: 10px;
-      padding: 10px 16px;
-      font-size: 16px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
+      right: 14px;
+      font-size: 20px;
       cursor: pointer;
-      z-index: 999;
-      font-weight: bold;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      color: #888;
     }
-    .back-button:hover {
-      background-color: #218838;
-    }
-    .chapter-list-button {
-      position: fixed;
-      top: 60px;
-      left: 10px;
-      padding: 10px 16px;
-      font-size: 16px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
+    .modal button {
+      padding: 8px 14px;
+      font-size: 14px;
+      margin: 10px 5px 0 5px;
       cursor: pointer;
-      z-index: 999;
-    }
-    .home-button {
-      position: fixed;
-      top: 110px;
-      left: 10px;
-      padding: 10px 16px;
-      font-size: 16px;
-      background-color: #ffc107;
-      color: black;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      z-index: 999;
-      font-weight: bold;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .home-button:hover {
-      background-color: #e0a800;
-    }
-    .next-button {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      padding: 12px 20px;
-      font-size: 16px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      z-index: 999;
     }
   </style>
 </head>
 <body>
-
   <button class="back-button" onclick="history.back()">← Back</button>
   <button id="chapterListBtn" class="chapter-list-button" style="display:none;">← Back to Chapter List</button>
   <button class="home-button" onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
-
   <div id="chapter-content" class="chapter-content"></div>
-
   <button class="next-button" onclick="goToNextChapter()">Next Chapter →</button>
+
+  <div id="unlockModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+      <span class="modal-close" onclick="closeModal()">&times;</span>
+      <p id="modal-text">Checking coin balance...</p>
+      <div id="modal-buttons"></div>
+    </div>
+  </div>
 
   <script>
     const supabase = window.supabase.createClient(
       'https://jkjfdgjgjpybnixqwiou.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
+      'ey...YourSupabaseKey...'
     );
 
     const urlParams = new URLSearchParams(window.location.search);
     const chapterId = urlParams.get('id');
     let currentChapterId = chapterId;
+    let currentChapter;
 
     checkSession();
 
     async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
-
       if (session && session.user) {
         localStorage.setItem('session', JSON.stringify(session));
         setTimeout(loadChapter, 150);
       } else {
-        const stored = localStorage.getItem('session');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const { data, error } = await supabase.auth.setSession({
-            access_token: parsed.access_token,
-            refresh_token: parsed.refresh_token
-          });
-
-          if (data?.session?.user) {
-            setTimeout(loadChapter, 150);
-            return;
-          }
-        }
-
         window.location.href = "auth.html";
       }
     }
 
-    async function unlockChapterIfNeeded(chapterId) {
+    async function unlockChapterIfNeeded() {
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
-      if (!userId) {
-        alert("Please log in.");
-        return false;
-      }
+      if (!userId) return false;
 
       const { data: existing } = await supabase
         .from('user_unlocks')
         .select('*')
         .eq('user_id', userId)
-        .eq('chapter_id', chapterId)
+        .eq('chapter_id', currentChapterId)
         .maybeSingle();
 
       if (existing) return true;
 
-      const { error } = await supabase.rpc('unlock_chapter', {
-        user_id: userId,
-        chapter_id: chapterId
-      });
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('coins')
+        .eq('id', userId)
+        .single();
 
-      if (error) {
-        alert("❌ Failed to unlock: " + error.message);
-        return false;
+      const coins = profile?.coins || 0;
+      const cost = currentChapter.coin_cost || 0;
+
+      document.getElementById('modal-text').textContent = `This chapter costs ${cost} coins. You have ${coins} coins.`;
+      const modalButtons = document.getElementById('modal-buttons');
+      modalButtons.innerHTML = '';
+
+      if (coins >= cost) {
+        const yesBtn = document.createElement('button');
+        yesBtn.textContent = 'Yes, Unlock';
+        yesBtn.onclick = async () => {
+          const { error } = await supabase.rpc('unlock_chapter', {
+            user_id: userId,
+            chapter_id: currentChapterId
+          });
+          if (error) alert("❌ Failed to unlock: " + error.message);
+          else {
+            closeModal();
+            loadChapter(true);
+          }
+        };
+        modalButtons.appendChild(yesBtn);
+      } else {
+        const addBtn = document.createElement('button');
+        addBtn.textContent = 'Go to Wallet';
+        addBtn.onclick = () => window.location.href = 'wallet.html';
+        modalButtons.appendChild(addBtn);
       }
-
-      alert("✅ Chapter unlocked!");
-      return true;
+      showModal();
+      return false;
     }
 
-    async function loadChapter() {
-      const container = document.getElementById('chapter-content');
+    function showModal() {
+      document.getElementById('unlockModal').style.display = 'flex';
+    }
+    function closeModal() {
+      document.getElementById('unlockModal').style.display = 'none';
+    }
 
-      const { data: chapter, error } = await supabase
+    async function loadChapter(forceUnlocked = false) {
+      const container = document.getElementById('chapter-content');
+      const { data, error } = await supabase
         .from('chapters')
         .select('*')
         .eq('id', currentChapterId)
         .single();
 
-      if (error || !chapter) {
-        console.error("Error loading chapter:", error);
-        container.innerHTML = "<p>❌ Error loading chapter. Please try again.</p>";
+      if (error || !data) {
+        container.innerHTML = "<p>❌ Error loading chapter.</p>";
         return;
       }
 
-      // If locked, try unlocking
-      if (chapter.locked) {
-        const unlocked = await unlockChapterIfNeeded(chapter.id);
+      currentChapter = data;
+
+      if (!forceUnlocked && currentChapter.locked) {
+        const unlocked = await unlockChapterIfNeeded();
         if (!unlocked) {
-          container.innerHTML = `<p class="locked">🔒 This chapter is locked. Please unlock to read.</p>`;
+          container.innerHTML = `<p class="locked">🔒 This chapter is locked.</p>`;
           return;
         }
       }
 
-      container.innerHTML = `<h1>${chapter.title}</h1><p>${chapter.content}</p>`;
-
+      container.innerHTML = `<h1>${currentChapter.title}</h1><p>${currentChapter.content}</p>`;
       const chapterListBtn = document.getElementById('chapterListBtn');
       chapterListBtn.style.display = 'block';
-      chapterListBtn.onclick = () => {
-        window.location.href = `book.html?id=${chapter.book_id}`;
-      };
+      chapterListBtn.onclick = () => window.location.href = `book.html?id=${currentChapter.book_id}`;
     }
 
     async function goToNextChapter() {
-      const { data: currentChapter, error: currentError } = await supabase
+      const { data: current, error: currentError } = await supabase
         .from('chapters')
         .select('chapter_number, book_id')
         .eq('id', currentChapterId)
         .single();
 
-      if (currentError || !currentChapter) {
-        alert("❌ Failed to get current chapter info.");
-        return;
-      }
+      if (currentError || !current) return alert("❌ Failed to get chapter info.");
 
-      const { chapter_number, book_id } = currentChapter;
-
-      const { data: nextChapters, error: nextError } = await supabase
+      const { data: nextChapters } = await supabase
         .from('chapters')
         .select('id')
-        .eq('book_id', book_id)
-        .gt('chapter_number', chapter_number)
+        .eq('book_id', current.book_id)
+        .gt('chapter_number', current.chapter_number)
         .order('chapter_number', { ascending: true })
         .limit(1);
 
-      if (nextError || !nextChapters || nextChapters.length === 0) {
-        alert("🚫 This is the last chapter.");
-        return;
-      }
+      if (!nextChapters || nextChapters.length === 0)
+        return alert("🚫 This is the last chapter.");
 
-      const nextChapter = nextChapters[0];
-      window.location.href = `chapter.html?id=${nextChapter.id}`;
+      window.location.href = `chapter.html?id=${nextChapters[0].id}`;
     }
   </script>
 </body>
