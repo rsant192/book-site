@@ -1,35 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>My Storybooks</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    .book {
-      display: flex;
-      align-items: center;
-      border: 1px solid #ddd;
-      padding: 10px;
-      margin-bottom: 10px;
-      cursor: pointer;
-    }
-    .book img {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      margin-right: 15px;
-      border-radius: 5px;
-    }
-    .book h2 {
-      margin: 0;
-    }
-    .writer-notes {
-      color: #555;
-      font-style: italic;
-      margin-top: 5px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <h1>📚 My Storybooks</h1>
@@ -38,7 +13,9 @@
     <button onclick="window.location.href='auth.html'">🔐 Login</button>
   </div>
 
-  <div id="books"></div>
+  <button id="walletBtn" class="wallet-button" style="display: none;" onclick="window.location.href='wallet.html'">💰 Wallet</button>
+
+  <div id="books">Loading...</div>
 
   <script>
     const supabase = window.supabase.createClient(
@@ -46,27 +23,34 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
     );
 
-    checkSession();
-    loadBooks();
-
-    async function checkSession() {
-      const { data: { session }, error } = await supabase.auth.getSession();
+    async function init() {
+      const { data: { session } } = await supabase.auth.getSession();
       const authDiv = document.getElementById('auth-status');
+      const walletBtn = document.getElementById('walletBtn');
 
-      if (session && session.user) {
+      if (session?.user) {
         authDiv.innerHTML = '<p>✅ You are logged in</p>';
-        localStorage.setItem('session', JSON.stringify(session));
+        walletBtn.style.display = 'inline-block';
+        localStorage.setItem("session", JSON.stringify(session));
+        await loadBooks();
       } else {
-        const stored = localStorage.getItem('session');
+        const stored = localStorage.getItem("session");
         if (stored) {
           const parsed = JSON.parse(stored);
           const { data, error } = await supabase.auth.setSession({
             access_token: parsed.access_token,
             refresh_token: parsed.refresh_token
           });
+
           if (data?.session?.user) {
             authDiv.innerHTML = '<p>✅ You are logged in</p>';
+            walletBtn.style.display = 'inline-block';
+            await loadBooks();
+          } else {
+            document.getElementById('books').innerHTML = '<p>🚫 Please log in to see your books.</p>';
           }
+        } else {
+          document.getElementById('books').innerHTML = '<p>🚫 Please log in to see your books.</p>';
         }
       }
     }
@@ -74,9 +58,10 @@
     async function loadBooks() {
       const { data: books, error } = await supabase.from('books').select('*');
       const booksDiv = document.getElementById('books');
+      booksDiv.innerHTML = ''; // Clear loading text
 
-      if (error || !books) {
-        booksDiv.innerHTML = '<p>Error loading books.</p>';
+      if (error || !books || books.length === 0) {
+        booksDiv.innerHTML = '<p>No books found.</p>';
         return;
       }
 
@@ -86,7 +71,6 @@
         bookEl.onclick = () => {
           window.location.href = `book.html?id=${book.id}`;
         };
-
         bookEl.innerHTML = `
           ${book.cover ? `<img src="${book.cover}" alt="Cover">` : '<img src="placeholder.jpg" alt="No Cover">'}
           <div>
@@ -98,6 +82,8 @@
         booksDiv.appendChild(bookEl);
       }
     }
+
+    init(); // 🚀 start here
   </script>
 </body>
 </html>

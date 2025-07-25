@@ -107,7 +107,7 @@
 
       if (session && session.user) {
         localStorage.setItem('session', JSON.stringify(session));
-        setTimeout(loadChapter, 150); // ✅ slight delay to avoid fetch issue
+        setTimeout(loadChapter, 150);
       } else {
         const stored = localStorage.getItem('session');
         if (stored) {
@@ -123,8 +123,39 @@
           }
         }
 
-        window.location.href = "auth.html"; // No session found
+        window.location.href = "auth.html";
       }
+    }
+
+    async function unlockChapterIfNeeded(chapterId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) {
+        alert("Please log in.");
+        return false;
+      }
+
+      const { data: existing } = await supabase
+        .from('user_unlocks')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('chapter_id', chapterId)
+        .maybeSingle();
+
+      if (existing) return true;
+
+      const { error } = await supabase.rpc('unlock_chapter', {
+        user_id: userId,
+        chapter_id: chapterId
+      });
+
+      if (error) {
+        alert("❌ Failed to unlock: " + error.message);
+        return false;
+      }
+
+      alert("✅ Chapter unlocked!");
+      return true;
     }
 
     async function loadChapter() {
@@ -142,11 +173,16 @@
         return;
       }
 
+      // If locked, try unlocking
       if (chapter.locked) {
-        container.innerHTML = `<p class="locked">🔒 This chapter is locked. Please unlock to read.</p>`;
-      } else {
-        container.innerHTML = `<h1>${chapter.title}</h1><p>${chapter.content}</p>`;
+        const unlocked = await unlockChapterIfNeeded(chapter.id);
+        if (!unlocked) {
+          container.innerHTML = `<p class="locked">🔒 This chapter is locked. Please unlock to read.</p>`;
+          return;
+        }
       }
+
+      container.innerHTML = `<h1>${chapter.title}</h1><p>${chapter.content}</p>`;
 
       const chapterListBtn = document.getElementById('chapterListBtn');
       chapterListBtn.style.display = 'block';
