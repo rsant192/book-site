@@ -16,10 +16,14 @@
       line-height: 1.7;
       margin-bottom: 80px;
     }
-    .back-button, .chapter-list-button, .home-button, .next-button {
+    .back-button {
       position: fixed;
+      top: 10px;
+      left: 10px;
       padding: 10px 16px;
       font-size: 16px;
+      background-color: #28a745;
+      color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
@@ -27,59 +31,52 @@
       font-weight: bold;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-    .back-button {
-      top: 10px; left: 10px;
-      background-color: #28a745; color: white;
+    .back-button:hover {
+      background-color: #218838;
     }
-    .back-button:hover { background-color: #218838; }
     .chapter-list-button {
-      top: 60px; left: 10px;
-      background-color: #28a745; color: white;
-    }
-    .home-button {
-      top: 110px; left: 10px;
-      background-color: #ffc107; color: black;
-    }
-    .home-button:hover { background-color: #e0a800; }
-    .next-button {
-      bottom: 10px; right: 10px;
-      background-color: #007bff; color: white;
-      border-radius: 6px;
-    }
-
-    /* Modal */
-    .modal {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 9999;
-    }
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-      position: relative;
-    }
-    .modal-content h2 { margin-top: 0; }
-    .modal-content button {
-      padding: 10px 18px;
-      margin: 10px 5px;
+      top: 60px;
+      left: 10px;
+      padding: 10px 16px;
       font-size: 16px;
+      background-color: #28a745;
+      color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      z-index: 999;
     }
-    .confirm-btn { background-color: #007bff; color: white; }
-    .cancel-btn { background-color: #ccc; }
-    .add-coins-btn { background-color: #ffc107; color: black; }
-    .close-btn {
-      position: absolute; top: 10px; right: 10px;
-      background: none; border: none; font-size: 20px; cursor: pointer;
+    .home-button {
+      position: fixed;
+      top: 110px;
+      left: 10px;
+      padding: 10px 16px;
+      font-size: 16px;
+      background-color: #ffc107;
+      color: black;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 999;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .home-button:hover {
+      background-color: #e0a800;
+    }
+    .next-button {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      padding: 12px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 999;
     }
   </style>
 </head>
@@ -90,22 +87,13 @@
   <button class="home-button" onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
 
   <div id="chapter-content" class="chapter-content"></div>
-  <button class="next-button" onclick="goToNextChapter()">Next Chapter →</button>
 
-  <div id="unlock-modal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <button class="close-btn" onclick="closeModal()">×</button>
-      <h2>Unlock Chapter?</h2>
-      <p>This chapter costs <strong id="coinCost"></strong> coins.</p>
-      <p>You have <strong id="userCoins"></strong> coins.</p>
-      <div id="modal-actions"></div>
-    </div>
-  </div>
+  <button class="next-button" onclick="goToNextChapter()">Next Chapter →</button>
 
   <script>
     const supabase = window.supabase.createClient(
       'https://jkjfdgjgjpybnixqwiou.supabase.co',
-      'YOUR-ANON-KEY'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
     );
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -116,101 +104,63 @@
 
     async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
+
+      if (session && session.user) {
         localStorage.setItem('session', JSON.stringify(session));
-        loadChapter();
+        setTimeout(loadChapter, 150);
       } else {
         const stored = localStorage.getItem('session');
         if (stored) {
           const parsed = JSON.parse(stored);
-          const { data } = await supabase.auth.setSession({
+          const { data, error } = await supabase.auth.setSession({
             access_token: parsed.access_token,
             refresh_token: parsed.refresh_token
           });
-          if (data?.session?.user) return loadChapter();
+
+          if (data?.session?.user) {
+            setTimeout(loadChapter, 150);
+            return;
+          }
         }
+
         window.location.href = "auth.html";
       }
-    }
-
-    function closeModal() {
-      document.getElementById("unlock-modal").style.display = "none";
-    }
-
-    async function showUnlockModal(chapter) {
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
-      const coinCost = chapter.coin_cost || 0;
-
-      const { data: profile } = await supabase
-        .from("user_profiles")
-        .select("coins")
-        .eq("user_id", userId)
-        .single();
-
-      const userCoins = profile?.coins || 0;
-
-      document.getElementById("coinCost").textContent = coinCost;
-      document.getElementById("userCoins").textContent = userCoins;
-
-      const actionsDiv = document.getElementById("modal-actions");
-      actionsDiv.innerHTML = "";
-
-      if (userCoins >= coinCost) {
-        const unlockBtn = document.createElement("button");
-        unlockBtn.className = "confirm-btn";
-        unlockBtn.textContent = "Yes, Unlock";
-        unlockBtn.onclick = async () => {
-          closeModal();
-          const success = await unlockChapterIfNeeded(chapter.id);
-          if (success) loadChapter();
-        };
-        actionsDiv.appendChild(unlockBtn);
-      } else {
-        const sorryMsg = document.createElement("p");
-        sorryMsg.textContent = "Sorry, you don’t have enough coins.";
-        actionsDiv.appendChild(sorryMsg);
-
-        const addBtn = document.createElement("button");
-        addBtn.className = "add-coins-btn";
-        addBtn.textContent = "Add Coins";
-        addBtn.onclick = () => window.location.href = "wallet.html";
-        actionsDiv.appendChild(addBtn);
-      }
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "cancel-btn";
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.onclick = closeModal;
-      actionsDiv.appendChild(cancelBtn);
-
-      document.getElementById("unlock-modal").style.display = "flex";
     }
 
     async function unlockChapterIfNeeded(chapterId) {
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
-      if (!userId) return false;
+      if (!userId) {
+        alert("Please log in.");
+        return false;
+      }
 
       const { data: existing } = await supabase
-        .from("user_unlocks")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("chapter_id", chapterId)
+        .from('user_unlocks')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('chapter_id', chapterId)
         .maybeSingle();
 
       if (existing) return true;
 
-      const { error } = await supabase.rpc("unlock_chapter", {
+      const { error } = await supabase.rpc('unlock_chapter', {
         user_id: userId,
         chapter_id: chapterId
       });
 
-      return !error;
+      if (error) {
+        alert("❌ Failed to unlock: " + error.message);
+        return false;
+      }
+
+      alert("✅ Chapter unlocked!");
+      return true;
     }
 
     async function loadChapter() {
       const container = document.getElementById('chapter-content');
+
       const { data: chapter, error } = await supabase
         .from('chapters')
         .select('*')
@@ -218,14 +168,17 @@
         .single();
 
       if (error || !chapter) {
-        container.innerHTML = "<p>❌ Error loading chapter.</p>";
+        console.error("Error loading chapter:", error);
+        container.innerHTML = "<p>❌ Error loading chapter. Please try again.</p>";
         return;
       }
 
+      // If locked, try unlocking
       if (chapter.locked) {
         const unlocked = await unlockChapterIfNeeded(chapter.id);
         if (!unlocked) {
-          return showUnlockModal(chapter);
+          container.innerHTML = `<p class="locked">🔒 This chapter is locked. Please unlock to read.</p>`;
+          return;
         }
       }
 
@@ -239,14 +192,20 @@
     }
 
     async function goToNextChapter() {
-      const { data: currentChapter } = await supabase
+      const { data: currentChapter, error: currentError } = await supabase
         .from('chapters')
         .select('chapter_number, book_id')
         .eq('id', currentChapterId)
         .single();
 
+      if (currentError || !currentChapter) {
+        alert("❌ Failed to get current chapter info.");
+        return;
+      }
+
       const { chapter_number, book_id } = currentChapter;
-      const { data: nextChapters } = await supabase
+
+      const { data: nextChapters, error: nextError } = await supabase
         .from('chapters')
         .select('id')
         .eq('book_id', book_id)
@@ -254,7 +213,7 @@
         .order('chapter_number', { ascending: true })
         .limit(1);
 
-      if (!nextChapters?.length) {
+      if (nextError || !nextChapters || nextChapters.length === 0) {
         alert("🚫 This is the last chapter.");
         return;
       }
