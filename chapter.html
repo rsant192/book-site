@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Chapter</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="style.css">
   <style>
     .locked {
@@ -91,15 +91,41 @@
   <button class="next-button" onclick="goToNextChapter()">Next Chapter →</button>
 
   <script>
-    console.log("Loading chapter page...");
-
-    const SUPABASE_URL = 'https://jkjfdgjgjpybnixqwiou.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = window.supabase.createClient(
+      'https://jkjfdgjgjpybnixqwiou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
+    );
 
     const urlParams = new URLSearchParams(window.location.search);
     const chapterId = urlParams.get('id');
     let currentChapterId = chapterId;
+
+    checkSession();
+
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session && session.user) {
+        localStorage.setItem('session', JSON.stringify(session));
+        loadChapter();
+      } else {
+        const stored = localStorage.getItem('session');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const { data, error } = await supabase.auth.setSession({
+            access_token: parsed.access_token,
+            refresh_token: parsed.refresh_token
+          });
+
+          if (data?.session?.user) {
+            loadChapter();
+            return;
+          }
+        }
+
+        window.location.href = "auth.html"; // No session found
+      }
+    }
 
     async function loadChapter() {
       const { data: chapter, error } = await supabase
@@ -116,14 +142,13 @@
         return;
       }
 
-      // Display chapter content
       if (chapter.locked) {
         container.innerHTML = `<p class="locked">🔒 This chapter is locked. Please unlock to read.</p>`;
       } else {
         container.innerHTML = `<h1>${chapter.title}</h1><p>${chapter.content}</p>`;
       }
 
-      // Activate Chapter List button
+      // Show back to chapter list button
       const chapterListBtn = document.getElementById('chapterListBtn');
       chapterListBtn.style.display = 'block';
       chapterListBtn.onclick = () => {
@@ -161,8 +186,6 @@
       const nextChapter = nextChapters[0];
       window.location.href = `chapter.html?id=${nextChapter.id}`;
     }
-
-    loadChapter();
   </script>
 </body>
 </html>

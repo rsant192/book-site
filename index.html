@@ -45,10 +45,24 @@
     loadBooks();
 
     async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
       const authDiv = document.getElementById('auth-status');
-      if (session) {
+
+      if (session && session.user) {
         authDiv.innerHTML = '<p>✅ You are logged in</p>';
+        localStorage.setItem('session', JSON.stringify(session));
+      } else {
+        const stored = localStorage.getItem('session');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const { data, error } = await supabase.auth.setSession({
+            access_token: parsed.access_token,
+            refresh_token: parsed.refresh_token
+          });
+          if (data?.session?.user) {
+            authDiv.innerHTML = '<p>✅ You are logged in</p>';
+          }
+        }
       }
     }
 

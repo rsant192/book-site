@@ -76,10 +76,26 @@
 
     async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = "auth.html";
-      } else {
+
+      if (session && session.user) {
+        localStorage.setItem('session', JSON.stringify(session));
         loadChapters();
+      } else {
+        const stored = localStorage.getItem('session');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const { data, error } = await supabase.auth.setSession({
+            access_token: parsed.access_token,
+            refresh_token: parsed.refresh_token
+          });
+
+          if (data?.session?.user) {
+            loadChapters();
+            return;
+          }
+        }
+
+        window.location.href = "auth.html"; // if no valid session at all
       }
     }
 

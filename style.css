@@ -45,6 +45,23 @@ img {
   flex: 1;
 }
 
+/* ✅ Login status message */
+.login-status {
+  font-weight: bold;
+  color: green;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+/* ✅ Chapter Content */
+.chapter-content h1 {
+  margin-bottom: 10px;
+}
+.chapter-content p {
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
 /* ✅ Back button */
 .back-button {
   position: fixed;
@@ -83,4 +100,23 @@ img {
 }
 .home-button:hover {
   background-color: #e0a800;
+}
+
+/* ✅ Next chapter button */
+.next-button {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  padding: 12px 20px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 999;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.next-button:hover {
+  background-color: #0056b3;
 }
