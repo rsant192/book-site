@@ -13,19 +13,16 @@
       margin: auto;
       padding: 20px;
     }
-
     h1 {
       text-align: center;
       margin-bottom: 20px;
     }
-
     .coin-balance {
       font-size: 20px;
       font-weight: bold;
       margin-bottom: 30px;
       text-align: center;
     }
-
     .coin-package {
       border: 1px solid #ddd;
       border-radius: 10px;
@@ -33,7 +30,6 @@
       margin-bottom: 20px;
       text-align: center;
     }
-
     .coin-package button {
       background-color: #ffc439;
       border: none;
@@ -43,7 +39,6 @@
       cursor: pointer;
       border-radius: 6px;
     }
-
     .coin-package button:hover {
       background-color: #e0aa00;
     }
@@ -90,7 +85,6 @@
       let { data: { session } } = await supabase.auth.getSession();
 
       if (!session || !session.user) {
-        // Try restoring from localStorage
         const stored = localStorage.getItem("session");
         if (stored) {
           const parsed = JSON.parse(stored);
@@ -119,7 +113,18 @@
         .eq('id', userId)
         .single();
 
-      if (error || !data) {
+      if (error && error.code === 'PGRST116') {
+        // No profile yet — create one with 0 coins
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({ id: userId, coins: 0 });
+
+        if (insertError) {
+          document.getElementById("balance").innerText = "❌ Failed to create profile.";
+        } else {
+          return loadBalance(); // Retry after insert
+        }
+      } else if (error || !data) {
         document.getElementById("balance").innerText = "Error loading balance.";
       } else {
         document.getElementById("balance").innerText = `🔸 You have ${data.coins || 0} coins`;
