@@ -42,10 +42,34 @@
     .coin-package button:hover {
       background-color: #e0aa00;
     }
+    .nav-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .nav-buttons button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .nav-buttons button:hover {
+      background-color: #0056b3;
+    }
   </style>
 </head>
 <body>
   <h1>💰 My Wallet</h1>
+
+  <div class="nav-buttons">
+    <button onclick="window.location.href='index.html'">🏠 Homepage</button>
+    <button onclick="goToLastBook()">📖 Chapter List</button>
+  </div>
+
   <div id="balance" class="coin-balance">Loading balance...</div>
 
   <div class="coin-package">
@@ -114,7 +138,6 @@
         .single();
 
       if (error && error.code === 'PGRST116') {
-        // No profile yet — create one with 0 coins
         const { error: insertError } = await supabase
           .from('profiles')
           .insert({ id: userId, coins: 0 });
@@ -122,7 +145,7 @@
         if (insertError) {
           document.getElementById("balance").innerText = "❌ Failed to create profile.";
         } else {
-          return loadBalance(); // Retry after insert
+          return loadBalance();
         }
       } else if (error || !data) {
         document.getElementById("balance").innerText = "Error loading balance.";
@@ -170,7 +193,15 @@
       }).render(`#paypal-${buttonId}`);
     }
 
-    // INIT
+    function goToLastBook() {
+      const lastBookId = localStorage.getItem("lastBookId");
+      if (lastBookId) {
+        window.location.href = `book.html?id=${lastBookId}`;
+      } else {
+        alert("❌ No last book found. Please open a book first.");
+      }
+    }
+
     loadBalance();
     setupPayPal('100', 100, 1);
     setupPayPal('200', 200, 2);

@@ -71,6 +71,7 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const bookId = urlParams.get('id');
+    localStorage.setItem("lastBookId", bookId); // ✅ STORE BOOK ID FOR WALLET PAGE
 
     checkSession();
 
@@ -79,7 +80,7 @@
 
       if (session && session.user) {
         localStorage.setItem('session', JSON.stringify(session));
-        setTimeout(loadChapters, 150); // 🔧 Add delay to stabilize loading
+        setTimeout(loadChapters, 150);
       } else {
         const stored = localStorage.getItem('session');
         if (stored) {
@@ -95,7 +96,6 @@
           }
         }
 
-        // 🔁 Fallback: force reload if session fails
         window.location.reload();
       }
     }
