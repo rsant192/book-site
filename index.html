@@ -46,13 +46,45 @@
     .wallet-button:hover {
       background-color: #e0a800;
     }
+
+    .auth-controls {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .auth-controls button {
+      padding: 8px 16px;
+      font-size: 16px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .login-btn {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .logout-btn {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .login-btn:hover {
+      background-color: #0056b3;
+    }
+
+    .logout-btn:hover {
+      background-color: #b52a37;
+    }
   </style>
 </head>
 <body>
   <h1>📚 My Storybooks</h1>
 
-  <div id="auth-status">
-    <button onclick="window.location.href='auth.html'">🔐 Login</button>
+  <div id="auth-controls" class="auth-controls">
+    <!-- Login or Logout buttons will go here -->
   </div>
 
   <button id="walletBtn" class="wallet-button" style="display: none;" onclick="window.location.href='wallet.html'">💰 Wallet</button>
@@ -67,14 +99,17 @@
 
     async function checkSessionAndLoadBooks() {
       const { data: { session } } = await supabase.auth.getSession();
-      const authDiv = document.getElementById('auth-status');
+      const authControls = document.getElementById('auth-controls');
       const walletBtn = document.getElementById('walletBtn');
 
       if (session && session.user) {
-        authDiv.innerHTML = '<p>✅ You are logged in</p>';
         walletBtn.style.display = 'inline-block';
+        authControls.innerHTML = `
+          <p>✅ You are logged in</p>
+          <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+        `;
         localStorage.setItem('session', JSON.stringify(session));
-        loadBooks(); // ✅ SAFE to call here now
+        loadBooks();
       } else {
         const stored = localStorage.getItem('session');
         if (stored) {
@@ -84,16 +119,31 @@
             refresh_token: parsed.refresh_token
           });
           if (data?.session?.user) {
-            authDiv.innerHTML = '<p>✅ You are logged in</p>';
             walletBtn.style.display = 'inline-block';
-            loadBooks(); // ✅ After restoring session
+            authControls.innerHTML = `
+              <p>✅ You are logged in</p>
+              <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+            `;
+            loadBooks();
           } else {
-            authDiv.innerHTML = '<p>❌ Session expired. Please log in again.</p>';
+            authControls.innerHTML = `
+              <p>🔒 Please log in to see your books.</p>
+              <button class="login-btn" onclick="window.location.href='auth.html'">🔐 Log In</button>
+            `;
           }
         } else {
-          authDiv.innerHTML = '<p>🔐 Please log in to see your books.</p>';
+          authControls.innerHTML = `
+            <p>🔒 Please log in to see your books.</p>
+            <button class="login-btn" onclick="window.location.href='auth.html'">🔐 Log In</button>
+          `;
         }
       }
+    }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      localStorage.removeItem("session");
+      window.location.reload();
     }
 
     async function loadBooks() {
@@ -124,7 +174,6 @@
       }
     }
 
-    // ✅ ONLY call session and books together
     checkSessionAndLoadBooks();
   </script>
 </body>
