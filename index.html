@@ -29,23 +29,6 @@
       font-style: italic;
       margin-top: 5px;
     }
-    .wallet-button {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background-color: #ffc107;
-      color: black;
-      border: none;
-      padding: 10px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      z-index: 999;
-    }
-    .wallet-button:hover {
-      background-color: #e0a800;
-    }
   </style>
 </head>
 <body>
@@ -55,8 +38,6 @@
     <button onclick="window.location.href='auth.html'">🔐 Login</button>
   </div>
 
-  <button id="walletBtn" class="wallet-button" style="display: none;" onclick="window.location.href='wallet.html'">💰 Wallet</button>
-
   <div id="books"></div>
 
   <script>
@@ -65,45 +46,37 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
     );
 
-    async function checkSessionAndLoad() {
+    checkSession();
+    loadBooks();
+
+    async function checkSession() {
+      const { data: { session }, error } = await supabase.auth.getSession();
       const authDiv = document.getElementById('auth-status');
-      const walletBtn = document.getElementById('walletBtn');
 
-      let { data: { session } } = await supabase.auth.getSession();
-
-      if (!session || !session.user) {
-        const stored = localStorage.getItem("session");
+      if (session && session.user) {
+        authDiv.innerHTML = '<p>✅ You are logged in</p>';
+        localStorage.setItem('session', JSON.stringify(session));
+      } else {
+        const stored = localStorage.getItem('session');
         if (stored) {
           const parsed = JSON.parse(stored);
           const { data, error } = await supabase.auth.setSession({
             access_token: parsed.access_token,
             refresh_token: parsed.refresh_token
           });
-
           if (data?.session?.user) {
-            session = data.session;
-          } else {
-            authDiv.innerHTML = '<p>❌ Please log in.</p>';
-            return;
+            authDiv.innerHTML = '<p>✅ You are logged in</p>';
           }
-        } else {
-          authDiv.innerHTML = '<p>❌ Please log in.</p>';
-          return;
         }
       }
-
-      authDiv.innerHTML = '<p>✅ You are logged in</p>';
-      walletBtn.style.display = 'inline-block';
-      localStorage.setItem('session', JSON.stringify(session));
-      loadBooks();
     }
 
     async function loadBooks() {
       const { data: books, error } = await supabase.from('books').select('*');
       const booksDiv = document.getElementById('books');
 
-      if (error || !books || books.length === 0) {
-        booksDiv.innerHTML = '<p>📭 No books found.</p>';
+      if (error || !books) {
+        booksDiv.innerHTML = '<p>Error loading books.</p>';
         return;
       }
 
@@ -125,8 +98,6 @@
         booksDiv.appendChild(bookEl);
       }
     }
-
-    checkSessionAndLoad();
   </script>
 </body>
 </html>
