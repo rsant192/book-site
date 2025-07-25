@@ -103,7 +103,7 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
     );
 
-    let userId;
+    let userId = null;
 
     async function loadBalance() {
       let { data: { session } } = await supabase.auth.getSession();
@@ -155,12 +155,20 @@
     }
 
     async function addCoins(amount) {
+      console.log("🪙 Adding", amount, "coins to user:", userId);
+
+      if (!userId) {
+        alert("⚠️ Not logged in. Cannot add coins.");
+        return;
+      }
+
       const { data, error } = await supabase.rpc('add_coins', {
         user_id: userId,
         coin_amount: amount
       });
 
       if (error) {
+        console.error("❌ Failed to add coins:", error);
         alert("❌ Failed to add coins. Please try again.");
       } else {
         alert(`✅ You received ${amount} coins!`);
@@ -185,10 +193,20 @@
             }]
           });
         },
-        onApprove: function(data, actions) {
-          return actions.order.capture().then(function(details) {
-            addCoins(coinAmount);
-          });
+        onApprove: async function(data, actions) {
+          const details = await actions.order.capture();
+          console.log("✅ Payment complete:", details);
+
+          if (!userId) {
+            alert("⚠️ You paid successfully, but no user session was found. Please refresh and log in.");
+            return;
+          }
+
+          addCoins(coinAmount);
+        },
+        onError: function(err) {
+          console.error("❌ PayPal error:", err);
+          alert("❌ Payment failed. Please try again.");
         }
       }).render(`#paypal-${buttonId}`);
     }
@@ -202,12 +220,14 @@
       }
     }
 
-    loadBalance();
-    setupPayPal('100', 100, 1);
-    setupPayPal('200', 200, 2);
-    setupPayPal('300', 300, 3);
-    setupPayPal('500', 500, 4);
-    setupPayPal('1000', 1000, 7);
+    // Initialize everything
+    loadBalance().then(() => {
+      setupPayPal('100', 100, 1);
+      setupPayPal('200', 200, 2);
+      setupPayPal('300', 300, 3);
+      setupPayPal('500', 500, 4);
+      setupPayPal('1000', 1000, 7);
+    });
   </script>
 </body>
 </html>
