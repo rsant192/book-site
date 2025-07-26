@@ -134,6 +134,9 @@
       for (const book of books) {
         const bookEl = document.createElement('div');
         bookEl.className = "book";
+        bookEl.onclick = () => {
+          window.location.href = `book.html?id=${book.id}`;
+        };
 
         const freeChapters = await supabase
           .from('chapters')
@@ -146,12 +149,6 @@
           const firstFree = freeChapters.data[0];
           freePreview = `<p class="chapter-preview"><a href="chapter.html?id=${firstFree.id}" style="color: green; text-decoration: underline;">Read Free Chapter</a></p>`;
         }
-
-        bookEl.onclick = () => {
-          if (isLoggedIn) {
-            window.location.href = `book.html?id=${book.id}`;
-          }
-        };
 
         bookEl.innerHTML = `
           ${book.cover ? `<img src="${book.cover}" alt="Cover">` : '<img src="placeholder.jpg" alt="No Cover">'}
