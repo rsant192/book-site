@@ -155,26 +155,33 @@ img {
     margin: 0 0 10px 0;
   }
 
-  /* Disable fixed position on buttons for small screens */
+  /* BACK & CHAPTER LIST BUTTON: left-aligned only */
   .back-button,
-  .home-button,
-  .next-button,
   .chapter-list-button {
     position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    display: block;
     width: 90%;
-    margin: 10px auto;
-    font-size: 14px;
+    margin: 10px 0;
+    text-align: left;
+    margin-left: 0;
     padding: 10px 14px;
+    font-size: 14px;
     box-shadow: none;
     z-index: auto;
   }
 
-  /* Chapter content padding and font for mobile */
+  /* HOME & NEXT BUTTON: centered */
+  .home-button,
+  .next-button {
+    position: relative !important;
+    width: 90%;
+    margin: 10px auto;
+    text-align: center;
+    padding: 10px 14px;
+    font-size: 14px;
+    box-shadow: none;
+    z-index: auto;
+  }
+
   .chapter-content {
     padding: 10px;
     margin-top: 10px;
@@ -189,7 +196,6 @@ img {
     line-height: 1.6;
   }
 
-  /* Modal button adjustment for PayPal/Unlock */
   .modal-content button {
     width: 100%;
     margin: 8px 0;
