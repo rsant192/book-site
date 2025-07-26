@@ -47,12 +47,10 @@
     .wallet-button:hover {
       background-color: #e0a800;
     }
-
     .auth-controls {
       text-align: center;
       margin: 20px 0;
     }
-
     .auth-controls button {
       padding: 8px 16px;
       font-size: 16px;
@@ -61,35 +59,31 @@
       border-radius: 6px;
       cursor: pointer;
     }
-
     .login-btn {
       background-color: #007bff;
       color: white;
     }
-
     .logout-btn {
       background-color: #dc3545;
       color: white;
     }
-
     .login-btn:hover {
       background-color: #0056b3;
     }
-
     .logout-btn:hover {
       background-color: #b52a37;
+    }
+    .chapter-preview {
+      margin-top: 6px;
+      font-size: 14px;
+      color: green;
     }
   </style>
 </head>
 <body>
   <h1>📚 My Storybooks</h1>
-
-  <div id="auth-controls" class="auth-controls">
-    <!-- Login or Logout buttons will go here -->
-  </div>
-
+  <div id="auth-controls" class="auth-controls"></div>
   <button id="walletBtn" class="wallet-button" onclick="window.location.href='wallet.html'">💰 Wallet</button>
-
   <div id="books"></div>
 
   <script>
@@ -119,7 +113,7 @@
         `;
       }
 
-      loadBooks(); // ✅ Load books for both logged in and guest
+      loadBooks();
     }
 
     async function logout() {
@@ -140,11 +134,22 @@
       for (const book of books) {
         const bookEl = document.createElement('div');
         bookEl.className = "book";
+
+        const freeChapters = await supabase
+          .from('chapters')
+          .select('id, coin_cost')
+          .eq('book_id', book.id)
+          .eq('coin_cost', 0);
+
+        let freePreview = '';
+        if (freeChapters.data && freeChapters.data.length > 0) {
+          const firstFree = freeChapters.data[0];
+          freePreview = `<p class="chapter-preview"><a href="chapter.html?id=${firstFree.id}" style="color: green; text-decoration: underline;">Read Free Chapter</a></p>`;
+        }
+
         bookEl.onclick = () => {
           if (isLoggedIn) {
             window.location.href = `book.html?id=${book.id}`;
-          } else {
-            window.location.href = `auth.html`;
           }
         };
 
@@ -154,8 +159,10 @@
             <h2>${book.title}</h2>
             <p>${book.description || ''}</p>
             ${book.writer_notes ? `<p class="writer-notes">✍️ ${book.writer_notes}</p>` : ''}
+            ${freePreview}
           </div>
         `;
+
         booksDiv.appendChild(bookEl);
       }
     }

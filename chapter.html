@@ -47,7 +47,6 @@
       border-radius: 6px;
     }
 
-    /* Modal */
     .modal {
       position: fixed;
       top: 0; left: 0;
@@ -84,7 +83,6 @@
   </style>
 </head>
 <body>
-
   <button class="back-button" onclick="history.back()">← Back</button>
   <button id="chapterListBtn" class="chapter-list-button" style="display:none;">← Back to Chapter List</button>
   <button class="home-button" onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
@@ -105,7 +103,7 @@
   <script>
     const supabase = window.supabase.createClient(
       'https://jkjfdgjgjpybnixqwiou.supabase.co',
-'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
     );
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -116,20 +114,21 @@
 
     async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
+      const stored = localStorage.getItem('session');
+
       if (session?.user) {
         localStorage.setItem('session', JSON.stringify(session));
-        loadChapter();
+        loadChapter(session.user.id);
+      } else if (stored) {
+        const parsed = JSON.parse(stored);
+        const { data } = await supabase.auth.setSession({
+          access_token: parsed.access_token,
+          refresh_token: parsed.refresh_token
+        });
+        if (data?.session?.user) return loadChapter(data.session.user.id);
+        return loadChapter(null);
       } else {
-        const stored = localStorage.getItem('session');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const { data } = await supabase.auth.setSession({
-            access_token: parsed.access_token,
-            refresh_token: parsed.refresh_token
-          });
-          if (data?.session?.user) return loadChapter();
-        }
-        window.location.href = "auth.html";
+        return loadChapter(null);
       }
     }
 
@@ -163,7 +162,7 @@
         unlockBtn.onclick = async () => {
           closeModal();
           const success = await unlockChapterIfNeeded(chapter.id);
-          if (success) loadChapter();
+          if (success) loadChapter(userId);
         };
         actionsDiv.appendChild(unlockBtn);
       } else {
@@ -209,7 +208,7 @@
       return !error;
     }
 
-    async function loadChapter() {
+    async function loadChapter(userId) {
       const container = document.getElementById('chapter-content');
       const { data: chapter, error } = await supabase
         .from('chapters')
@@ -222,11 +221,10 @@
         return;
       }
 
-      if (chapter.locked) {
+      if (chapter.locked && chapter.coin_cost > 0) {
+        if (!userId) return window.location.href = "auth.html";
         const unlocked = await unlockChapterIfNeeded(chapter.id);
-        if (!unlocked) {
-          return showUnlockModal(chapter);
-        }
+        if (!unlocked) return showUnlockModal(chapter);
       }
 
       container.innerHTML = `<h1>${chapter.title}</h1><p>${chapter.content}</p>`;
