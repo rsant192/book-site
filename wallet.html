@@ -13,9 +13,8 @@
       margin: auto;
       padding: 20px;
     }
-    h1 {
+    h1, h2 {
       text-align: center;
-      margin-bottom: 20px;
     }
     .coin-balance {
       font-size: 20px;
@@ -23,7 +22,7 @@
       margin-bottom: 30px;
       text-align: center;
     }
-    .coin-package {
+    .coin-package, .analytics {
       border: 1px solid #ddd;
       border-radius: 10px;
       padding: 15px;
@@ -97,6 +96,9 @@
     <div id="paypal-1000"></div>
   </div>
 
+  <h2>User Analytics</h2>
+  <div class="analytics" id="analytics">Loading analytics...</div>
+
   <script>
     const supabase = window.supabase.createClient(
       'https://jkjfdgjgjpybnixqwiou.supabase.co',
@@ -116,16 +118,10 @@
             access_token: parsed.access_token,
             refresh_token: parsed.refresh_token
           });
-
-          if (data?.session?.user) {
-            session = data.session;
-          } else {
-            window.location.href = "auth.html";
-            return;
-          }
+          if (data?.session?.user) session = data.session;
+          else return window.location.href = "auth.html";
         } else {
-          window.location.href = "auth.html";
-          return;
+          return window.location.href = "auth.html";
         }
       }
 
@@ -138,51 +134,63 @@
         .single();
 
       if (error && error.code === 'PGRST116') {
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({ id: userId, coins: 0 });
-
-        if (insertError) {
-          document.getElementById("balance").innerText = "❌ Failed to create profile.";
-        } else {
-          return loadBalance();
-        }
-      } else if (error || !data) {
-        document.getElementById("balance").innerText = "Error loading balance.";
-      } else {
-        document.getElementById("balance").innerText = `🔸 You have ${data.coins || 0} coins`;
+        await supabase.from('profiles').insert({ id: userId, coins: 0 });
+        return loadBalance();
       }
+
+      const coins = data?.coins || 0;
+      document.getElementById("balance").innerText = `🔸 You have ${coins} coins`;
+
+      loadAnalytics();
+    }
+
+    async function loadAnalytics() {
+      const { data, error } = await supabase
+        .from('coin_purchases')
+        .select('coins_purchased, paid_usd')
+        .eq('user_id', userId);
+
+      if (error || !data) {
+        document.getElementById("analytics").innerText = "⚠️ Failed to load analytics.";
+        return;
+      }
+
+      let totalCoins = 0;
+      let totalUsd = 0;
+
+      for (let row of data) {
+        totalCoins += row.coins_purchased;
+        totalUsd += row.paid_usd;
+      }
+
+      document.getElementById("analytics").innerHTML = `
+        <p>🧾 Total Coins Purchased: <strong>${totalCoins}</strong></p>
+        <p>💵 Total USD Spent: <strong>$${totalUsd.toFixed(2)}</strong></p>
+      `;
     }
 
     async function addCoins(amount, priceInUsd) {
-  console.log("🪙 Adding", amount, "coins to user:", userId);
+      if (!userId) return alert("⚠️ Not logged in.");
 
-  if (!userId) {
-    alert("⚠️ Not logged in. Cannot add coins.");
-    return;
-  }
+      const { error: rpcError } = await supabase.rpc('add_coins', {
+        user_id: userId,
+        coin_amount: amount
+      });
 
-  const { data, error } = await supabase.rpc('add_coins', {
-    user_id: userId,
-    coin_amount: amount
-  });
+      if (rpcError) {
+        alert("❌ Failed to add coins.");
+        return;
+      }
 
-  if (error) {
-    console.error("❌ Failed to add coins:", error);
-    alert("❌ Failed to add coins. Please try again.");
-  } else {
-    // ✅ INSERT INTO coin_purchases here:
-    await supabase.from('coin_purchases').insert({
-      user_id: userId,
-      coins_purchased: amount,
-      paid_usd: priceInUsd
-    });
+      await supabase.from('coin_purchases').insert({
+        user_id: userId,
+        coins_purchased: amount,
+        paid_usd: priceInUsd
+      });
 
-    alert(`✅ You received ${amount} coins!`);
-    loadBalance();
-  }
-}
-
+      alert(`✅ You received ${amount} coins!`);
+      loadBalance();
+    }
 
     function setupPayPal(buttonId, coinAmount, price) {
       paypal.Buttons({
@@ -192,30 +200,14 @@
           shape: 'pill',
           label: 'paypal'
         },
-        createOrder: function(data, actions) {
-          return actions.order.create({
-            purchase_units: [{
-              amount: {
-                value: price.toFixed(2)
-              }
-            }]
-          });
-        },
-        onApprove: async function(data, actions) {
-          const details = await actions.order.capture();
-          console.log("✅ Payment complete:", details);
-
-          if (!userId) {
-            alert("⚠️ You paid successfully, but no user session was found. Please refresh and log in.");
-            return;
-          }
-
+        createOrder: (data, actions) => actions.order.create({
+          purchase_units: [{ amount: { value: price.toFixed(2) } }]
+        }),
+        onApprove: async (data, actions) => {
+          await actions.order.capture();
           addCoins(coinAmount, price);
         },
-        onError: function(err) {
-          console.error("❌ PayPal error:", err);
-          alert("❌ Payment failed. Please try again.");
-        }
+        onError: err => alert("❌ Payment failed. Try again.")
       }).render(`#paypal-${buttonId}`);
     }
 
@@ -224,11 +216,11 @@
       if (lastBookId) {
         window.location.href = `book.html?id=${lastBookId}`;
       } else {
-        alert("❌ No last book found. Please open a book first.");
+        alert("❌ No last book found.");
       }
     }
 
-    // Initialize everything
+    // Load everything
     loadBalance().then(() => {
       setupPayPal('100', 100, 1);
       setupPayPal('200', 200, 2);
