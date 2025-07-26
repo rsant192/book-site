@@ -1,129 +1,139 @@
 <!-- ... everything before this stays the same -->
 
-  <button class="home-button" onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
+<button class="home-button" onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
 
-  <!-- ✅ DARK MODE TOGGLE BUTTON -->
-  <label style="display:block; margin: 70px 10px 10px;">
-    <input type="checkbox" id="darkModeToggle"> Dark Mode for Chapter
-  </label>
+<!-- ✅ DARK MODE TOGGLE BUTTON (hidden by default) -->
+<label id="darkModeToggleWrapper" style="display:none; margin: 70px 10px 10px;">
+  <input type="checkbox" id="darkModeToggle"> Dark Mode for Chapter
+</label>
 
-  <!-- ✅ CHAPTER CONTENT AREA -->
-  <div id="chapter-content" class="chapter-content"></div>
+<!-- ✅ CHAPTER CONTENT AREA -->
+<div id="chapter-content" class="chapter-content"></div>
 
-  <button class="next-button" onclick="goToNextChapter()">Next Chapter →</button>
+<button class="next-button" onclick="goToNextChapter()">Next Chapter →</button>
 
-<!-- ...modal div unchanged... -->
+<!-- ✅ SCRIPT -->
+<script>
+  const supabase = window.supabase.createClient(
+    'https://jkjfdgjgjpybnixqwiou.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
+  );
 
-  <script>
-    const supabase = window.supabase.createClient(
-      'https://jkjfdgjgjpybnixqwiou.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
-    );
+  const urlParams = new URLSearchParams(window.location.search);
+  const chapterId = urlParams.get('id');
+  let currentChapterId = chapterId;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const chapterId = urlParams.get('id');
-    let currentChapterId = chapterId;
+  checkSession();
 
-    checkSession();
+  async function checkSession() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const stored = localStorage.getItem('session');
 
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      const stored = localStorage.getItem('session');
-
-      if (session?.user) {
-        localStorage.setItem('session', JSON.stringify(session));
-        loadChapter(session.user.id);
-      } else if (stored) {
-        const parsed = JSON.parse(stored);
-        const { data } = await supabase.auth.setSession({
-          access_token: parsed.access_token,
-          refresh_token: parsed.refresh_token
-        });
-        if (data?.session?.user) return loadChapter(data.session.user.id);
-        return loadChapter(null);
-      } else {
-        return loadChapter(null);
+    if (session?.user) {
+      localStorage.setItem('session', JSON.stringify(session));
+      document.getElementById("darkModeToggleWrapper").style.display = "block";
+      loadChapter(session.user.id);
+    } else if (stored) {
+      const parsed = JSON.parse(stored);
+      const { data } = await supabase.auth.setSession({
+        access_token: parsed.access_token,
+        refresh_token: parsed.refresh_token
+      });
+      if (data?.session?.user) {
+        document.getElementById("darkModeToggleWrapper").style.display = "block";
+        return loadChapter(data.session.user.id);
       }
+      return loadChapter(null);
+    } else {
+      return loadChapter(null);
+    }
+  }
+
+  function closeModal() {
+    document.getElementById("unlock-modal").style.display = "none";
+  }
+
+  async function showUnlockModal(chapter) {
+    // unchanged
+  }
+
+  async function unlockChapterIfNeeded(chapterId) {
+    // unchanged
+  }
+
+  async function loadChapter(userId) {
+    const container = document.getElementById('chapter-content');
+    const { data: chapter, error } = await supabase
+      .from('chapters')
+      .select('*')
+      .eq('id', currentChapterId)
+      .single();
+
+    if (error || !chapter) {
+      container.innerHTML = "<p>❌ Error loading chapter.</p>";
+      return;
     }
 
-    function closeModal() {
-      document.getElementById("unlock-modal").style.display = "none";
+    if (chapter.locked && chapter.coin_cost > 0) {
+      if (!userId) return window.location.href = "auth.html";
+      const unlocked = await unlockChapterIfNeeded(chapter.id);
+      if (!unlocked) return showUnlockModal(chapter);
     }
 
-    async function showUnlockModal(chapter) {
-      // ... unchanged ...
-    }
+    // ✅ Render with full formatting
+    container.innerHTML = `<h1>${chapter.title}</h1>${chapter.content}`;
 
-    async function unlockChapterIfNeeded(chapterId) {
-      // ... unchanged ...
-    }
-
-    async function loadChapter(userId) {
-      const container = document.getElementById('chapter-content');
-      const { data: chapter, error } = await supabase
-        .from('chapters')
-        .select('*')
-        .eq('id', currentChapterId)
-        .single();
-
-      if (error || !chapter) {
-        container.innerHTML = "<p>❌ Error loading chapter.</p>";
-        return;
-      }
-
-      if (chapter.locked && chapter.coin_cost > 0) {
-        if (!userId) return window.location.href = "auth.html";
-        const unlocked = await unlockChapterIfNeeded(chapter.id);
-        if (!unlocked) return showUnlockModal(chapter);
-      }
-
-      container.innerHTML = `<h1>${chapter.title}</h1><p>${chapter.content}</p>`;
-
-      const chapterListBtn = document.getElementById('chapterListBtn');
+    const chapterListBtn = document.getElementById('chapterListBtn');
+    if (chapterListBtn) {
       chapterListBtn.style.display = 'block';
       chapterListBtn.onclick = () => {
         window.location.href = `book.html?id=${chapter.book_id}`;
       };
-
-      // ✅ Apply dark mode on load if previously saved
-      const isDark = localStorage.getItem("chapterDarkMode") === "true";
-      document.getElementById("darkModeToggle").checked = isDark;
-      if (isDark) container.classList.add("dark");
     }
 
-    async function goToNextChapter() {
-      // ... unchanged ...
-    }
+    // ✅ Apply dark mode if enabled
+    const isDark = localStorage.getItem("chapterDarkMode") === "true";
+    const toggle = document.getElementById("darkModeToggle");
+    if (toggle) toggle.checked = isDark;
+    if (isDark) container.classList.add("dark");
+  }
 
-    // ✅ Dark Mode Toggle Logic
-    document.addEventListener("DOMContentLoaded", () => {
-      const toggle = document.getElementById("darkModeToggle");
-      const content = document.getElementById("chapter-content");
+  async function goToNextChapter() {
+    // unchanged
+  }
 
+  // ✅ Toggle dark mode
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggle = document.getElementById("darkModeToggle");
+    const content = document.getElementById("chapter-content");
+
+    if (toggle) {
       toggle.addEventListener("change", () => {
         const enabled = toggle.checked;
         content.classList.toggle("dark", enabled);
         localStorage.setItem("chapterDarkMode", enabled);
       });
-    });
-  </script>
-
-  <!-- ✅ DARK MODE STYLES -->
-  <style>
-    #chapter-content.dark {
-      background-color: #1e1e1e;
-      color: #e0e0e0;
-      border-radius: 10px;
-      padding: 20px;
     }
+  });
+</script>
 
-    #chapter-content.dark h1 {
-      color: #ffffff;
-    }
+<!-- ✅ DARK MODE STYLES -->
+<style>
+  #chapter-content.dark {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+  }
 
-    #chapter-content.dark p {
-      color: #cccccc;
-    }
-  </style>
+  #chapter-content.dark h1 {
+    color: #ffffff;
+  }
+
+  #chapter-content.dark p {
+    color: #cccccc;
+  }
+</style>
+
 </body>
 </html>
