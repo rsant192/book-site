@@ -14,15 +14,13 @@
     .chapter-link:hover {
       background-color: #f0f0f0;
     }
-
-    .home-button {
+    .locked {
+      color: gray;
+    }
+    .home-button, .back-button {
       position: fixed;
-      top: 60px;
-      left: 10px;
       padding: 10px 16px;
       font-size: 16px;
-      background-color: #ffc107;
-      color: black;
       border: none;
       border-radius: 5px;
       cursor: pointer;
@@ -30,27 +28,21 @@
       font-weight: bold;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-
+    .home-button {
+      top: 60px;
+      left: 10px;
+      background-color: #ffc107;
+      color: black;
+    }
     .home-button:hover {
       background-color: #e0a800;
     }
-
     .back-button {
-      position: fixed;
       top: 10px;
       left: 10px;
-      padding: 10px 16px;
-      font-size: 16px;
       background-color: #28a745;
       color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      z-index: 999;
-      font-weight: bold;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-
     .back-button:hover {
       background-color: #218838;
     }
@@ -71,33 +63,19 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const bookId = urlParams.get('id');
-    localStorage.setItem("lastBookId", bookId); // ✅ STORE BOOK ID FOR WALLET PAGE
+    localStorage.setItem("lastBookId", bookId);
 
-    checkSession();
+    let isLoggedIn = false;
 
-    async function checkSession() {
+    checkSessionAndLoad();
+
+    async function checkSessionAndLoad() {
       const { data: { session } } = await supabase.auth.getSession();
-
       if (session && session.user) {
+        isLoggedIn = true;
         localStorage.setItem('session', JSON.stringify(session));
-        setTimeout(loadChapters, 150);
-      } else {
-        const stored = localStorage.getItem('session');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const { data, error } = await supabase.auth.setSession({
-            access_token: parsed.access_token,
-            refresh_token: parsed.refresh_token
-          });
-
-          if (data?.session?.user) {
-            setTimeout(loadChapters, 150);
-            return;
-          }
-        }
-
-        window.location.reload();
       }
+      loadChapters();
     }
 
     async function loadChapters() {
@@ -117,10 +95,17 @@
       for (const ch of chapters) {
         const chEl = document.createElement('div');
         chEl.className = 'chapter-link';
-        chEl.textContent = (ch.locked ? '🔒 ' : '📖 ') + ch.title;
-        chEl.onclick = () => {
-          window.location.href = `chapter.html?id=${ch.id}`;
-        };
+        chEl.textContent = (ch.coin_cost > 0 ? '🔒 ' : '📖 ') + ch.title;
+
+        if (isLoggedIn || ch.coin_cost === 0) {
+          chEl.onclick = () => {
+            window.location.href = `chapter.html?id=${ch.id}`;
+          };
+        } else if (ch.coin_cost > 0) {
+          chEl.classList.add('locked');
+          chEl.title = "Log in to unlock this chapter.";
+        }
+
         chaptersDiv.appendChild(chEl);
       }
     }
