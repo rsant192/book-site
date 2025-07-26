@@ -155,29 +155,38 @@ img {
     margin: 0 0 10px 0;
   }
 
-  /* BACK & CHAPTER LIST BUTTON: left-aligned only */
+  /* LEFT ALIGN for back buttons only */
   .back-button,
   .chapter-list-button {
     position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    display: block;
     width: 90%;
-    margin: 10px 0;
-    text-align: left;
-    margin-left: 0;
-    padding: 10px 14px;
+    margin: 10px 0 10px 10px !important;
     font-size: 14px;
+    padding: 10px 14px;
+    text-align: left;
     box-shadow: none;
     z-index: auto;
   }
 
-  /* HOME & NEXT BUTTON: centered */
+  /* CENTER other buttons */
   .home-button,
   .next-button {
     position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    display: block;
     width: 90%;
     margin: 10px auto;
-    text-align: center;
-    padding: 10px 14px;
     font-size: 14px;
+    padding: 10px 14px;
+    text-align: center;
     box-shadow: none;
     z-index: auto;
   }
