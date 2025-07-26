@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chapter</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="style.css">
@@ -148,10 +148,6 @@
       }
     }
 
-    function closeModal() {
-      document.getElementById("unlock-modal").style.display = "none";
-    }
-
     async function loadChapter(userId) {
       const container = document.getElementById('chapter-content');
       const { data: chapter, error } = await supabase
@@ -165,25 +161,21 @@
         return;
       }
 
-      if (chapter.locked && chapter.coin_cost > 0) {
-        if (!userId) return window.location.href = "auth.html";
-        const unlocked = await unlockChapterIfNeeded(chapter.id);
-        if (!unlocked) return showUnlockModal(chapter);
+      if (chapter.locked && chapter.coin_cost > 0 && !userId) {
+        return window.location.href = "auth.html";
       }
 
       // Increment views
       await supabase
         .from('chapters')
-        .update({ views: supabase.literal('views + 1') })
+        .update({ views: (chapter.views || 0) + 1 })
         .eq('id', currentChapterId);
 
       container.innerHTML = `
         <h1>${chapter.title}</h1>
-        <p class="chapter-views">👁️ Views: <span id="viewCount"></span></p>
+        <p class="chapter-views">👁️ Views: ${chapter.views || 0}</p>
         ${chapter.content}
       `;
-
-      document.getElementById("viewCount").textContent = chapter.views || 0;
 
       const chapterListBtn = document.getElementById('chapterListBtn');
       chapterListBtn.style.display = 'block';
@@ -220,78 +212,6 @@
 
       const nextChapter = nextChapters[0];
       window.location.href = `chapter.html?id=${nextChapter.id}`;
-    }
-
-    async function showUnlockModal(chapter) {
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
-      const coinCost = chapter.coin_cost || 0;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("coins")
-        .eq("id", userId)
-        .single();
-
-      const userCoins = profile?.coins || 0;
-
-      document.getElementById("coinCost").textContent = coinCost;
-      document.getElementById("userCoins").textContent = userCoins;
-
-      const actionsDiv = document.getElementById("modal-actions");
-      actionsDiv.innerHTML = "";
-
-      if (userCoins >= coinCost) {
-        const unlockBtn = document.createElement("button");
-        unlockBtn.className = "confirm-btn";
-        unlockBtn.textContent = "Yes, Unlock";
-        unlockBtn.onclick = async () => {
-          closeModal();
-          const success = await unlockChapterIfNeeded(chapter.id);
-          if (success) loadChapter(userId);
-        };
-        actionsDiv.appendChild(unlockBtn);
-      } else {
-        const sorryMsg = document.createElement("p");
-        sorryMsg.textContent = "Sorry, you don’t have enough coins.";
-        actionsDiv.appendChild(sorryMsg);
-
-        const addBtn = document.createElement("button");
-        addBtn.className = "add-coins-btn";
-        addBtn.textContent = "Add Coins";
-        addBtn.onclick = () => window.location.href = "wallet.html";
-        actionsDiv.appendChild(addBtn);
-      }
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "cancel-btn";
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.onclick = closeModal;
-      actionsDiv.appendChild(cancelBtn);
-
-      document.getElementById("unlock-modal").style.display = "flex";
-    }
-
-    async function unlockChapterIfNeeded(chapterId) {
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
-      if (!userId) return false;
-
-      const { data: existing } = await supabase
-        .from("user_unlocks")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("chapter_id", chapterId)
-        .maybeSingle();
-
-      if (existing) return true;
-
-      const { error } = await supabase.rpc("unlock_chapter", {
-        user_id: userId,
-        chapter_id: chapterId
-      });
-
-      return !error;
     }
 
     document.addEventListener("DOMContentLoaded", () => {
