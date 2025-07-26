@@ -213,19 +213,33 @@ img {
   }
 }
 
-/* DARK MODE STYLES (only affects chapter content) */
-body.dark-mode .chapter-content {
-  background-color: #121212;
-  color: #e0e0e0;
-  border-radius: 10px;
-  padding: 20px;
+/* DARK MODE TOGGLE POSITION FIX */
+#darkModeToggleWrapper {
+  position: relative;
+  z-index: 10;
+  padding: 10px 15px;
+  margin-top: 10px;
 }
 
-body.dark-mode .chapter-content h1 {
-  color: #ffffff;
+/* Label layout for desktop and mobile */
+#darkModeToggleWrapper label {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-body.dark-mode .chapter-content p {
-  color: #d0d0d0;
+@media (max-width: 600px) {
+  #darkModeToggleWrapper {
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-bottom: 10px;
+  }
+
+  #darkModeToggleWrapper label {
+    font-size: 16px;
+    flex-wrap: wrap;
+    line-height: 1.5;
+  }
 }
 
