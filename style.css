@@ -1,25 +1,29 @@
+/* GLOBAL STYLES */
 body {
   font-family: Arial, sans-serif;
   padding: 20px;
   max-width: 600px;
   margin: auto;
+  box-sizing: border-box;
 }
 
+/* BOOK and CHAPTER LIST ITEMS */
 .book, .chapter {
   border-bottom: 1px solid #ddd;
   padding: 10px 0;
   cursor: pointer;
 }
 
+/* COIN STATE COLORS */
 .locked {
   color: red;
   font-weight: bold;
 }
-
 .unlocked {
   color: green;
 }
 
+/* IMAGES */
 img {
   max-width: 100px;
   max-height: 100px;
@@ -28,6 +32,7 @@ img {
   margin-right: 15px;
 }
 
+/* BOOK CARD LAYOUT */
 .book-card {
   display: flex;
   align-items: center;
@@ -36,16 +41,17 @@ img {
   margin-bottom: 10px;
   border-radius: 10px;
   transition: background-color 0.2s;
+  flex-wrap: wrap;
 }
 .book-card:hover {
   background-color: #f9f9f9;
 }
-
 .book-info {
   flex: 1;
+  min-width: 200px;
 }
 
-/* ✅ Login status message */
+/* LOGIN STATUS */
 .login-status {
   font-weight: bold;
   color: green;
@@ -53,7 +59,7 @@ img {
   font-size: 16px;
 }
 
-/* ✅ Chapter Content */
+/* CHAPTER CONTENT */
 .chapter-content h1 {
   margin-bottom: 10px;
 }
@@ -62,7 +68,7 @@ img {
   white-space: pre-wrap;
 }
 
-/* ✅ Back button */
+/* BACK BUTTON */
 .back-button {
   position: fixed;
   top: 20px;
@@ -82,7 +88,7 @@ img {
   background-color: #0056b3;
 }
 
-/* ✅ Home button (Back to Homepage) */
+/* HOME BUTTON */
 .home-button {
   position: fixed;
   top: 70px;
@@ -102,7 +108,7 @@ img {
   background-color: #e0a800;
 }
 
-/* ✅ Next chapter button */
+/* NEXT BUTTON */
 .next-button {
   position: fixed;
   bottom: 10px;
@@ -121,11 +127,64 @@ img {
   background-color: #0056b3;
 }
 
-/* ✅ Writer Notes under description */
+/* WRITER NOTES */
 .writer-notes {
   font-style: italic;
   color: #555;
   margin-top: 6px;
   font-size: 14px;
   white-space: pre-wrap;
+}
+
+/* 📱 MOBILE FRIENDLY ADJUSTMENTS */
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+    max-width: 100%;
+  }
+
+  .book-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .book-card img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0 0 10px 0;
+  }
+
+  .back-button, .home-button, .next-button {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .back-button {
+    top: 10px;
+    left: 10px;
+  }
+
+  .home-button {
+    top: 55px;
+    left: 10px;
+  }
+
+  .next-button {
+    bottom: 10px;
+    right: 10px;
+  }
+
+  .chapter-content {
+    padding: 10px;
+  }
+
+  .chapter-content h1 {
+    font-size: 20px;
+  }
+
+  .chapter-content p {
+    font-size: 15px;
+    line-height: 1.6;
+  }
 }
