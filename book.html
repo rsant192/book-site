@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book Chapters</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="style.css">
@@ -104,14 +104,21 @@
 
         if (ch.coin_cost > 0 && !isLoggedIn) {
           chEl.classList.add('locked');
-          chEl.innerHTML = `🔒 <strong>${ch.title}</strong><div class="login-note">Login required to unlock</div>`;
+          chEl.innerHTML = `
+            🔒 <strong>${ch.title}</strong>
+            <div class="login-note">Login required to unlock</div>
+            <div style="font-size: 13px; color: gray;">👁️ ${ch.views || 0} views</div>
+          `;
           chEl.onclick = () => {
             window.location.href = 'auth.html';
           };
         } else {
-          chEl.textContent = (ch.coin_cost > 0 ? '🔒 ' : '📖 ') + ch.title;
+          chEl.innerHTML = `
+            ${ch.coin_cost > 0 ? '🔒' : '📖'} <strong>${ch.title}</strong>
+            <div style="font-size: 13px; color: gray;">👁️ ${ch.views || 0} views</div>
+          `;
           chEl.onclick = () => {
-            window.location.href = `chapter.html?id=${ch.id}`;
+            window.location.href = \`chapter.html?id=\${ch.id}\`;
           };
         }
 

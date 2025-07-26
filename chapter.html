@@ -17,6 +17,11 @@
       line-height: 1.7;
       margin-bottom: 80px;
     }
+    .chapter-views {
+      margin-bottom: 10px;
+      font-size: 15px;
+      color: gray;
+    }
     .back-button, .chapter-list-button, .home-button, .next-button {
       position: fixed;
       padding: 10px 16px;
@@ -45,11 +50,8 @@
       background-color: #007bff; color: white;
       border-radius: 6px;
     }
-
     .modal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.6);
       display: flex; align-items: center; justify-content: center;
       z-index: 9999;
@@ -58,19 +60,15 @@
       background: white;
       padding: 20px;
       border-radius: 10px;
-      width: 90%;
-      max-width: 400px;
+      width: 90%; max-width: 400px;
       text-align: center;
       position: relative;
     }
     .modal-content h2 { margin-top: 0; }
     .modal-content button {
-      padding: 10px 18px;
-      margin: 10px 5px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
+      padding: 10px 18px; margin: 10px 5px;
+      font-size: 16px; border: none;
+      border-radius: 5px; cursor: pointer;
     }
     .confirm-btn { background-color: #007bff; color: white; }
     .cancel-btn { background-color: #ccc; }
@@ -79,8 +77,6 @@
       position: absolute; top: 10px; right: 10px;
       background: none; border: none; font-size: 20px; cursor: pointer;
     }
-
-    /* ✅ DARK MODE styles for chapter content */
     #chapter-content.dark {
       background-color: #1e1e1e;
       color: #e0e0e0;
@@ -96,14 +92,12 @@
   <button id="chapterListBtn" class="chapter-list-button" style="display:none;">← Back to Chapter List</button>
   <button class="home-button" onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
 
-
-<div id="darkModeToggleWrapper">
-  <label>
-    <input type="checkbox" id="darkModeToggle" />
-    Dark Mode for Chapter
-  </label>
-</div>
-
+  <div id="darkModeToggleWrapper">
+    <label>
+      <input type="checkbox" id="darkModeToggle" />
+      Dark Mode for Chapter
+    </label>
+  </div>
 
   <div id="chapter-content" class="chapter-content"></div>
   <button class="next-button" onclick="goToNextChapter()">Next Chapter →</button>
@@ -121,7 +115,7 @@
   <script>
     const supabase = window.supabase.createClient(
       'https://jkjfdgjgjpybnixqwiou.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
     );
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -158,12 +152,87 @@
       document.getElementById("unlock-modal").style.display = "none";
     }
 
+    async function loadChapter(userId) {
+      const container = document.getElementById('chapter-content');
+      const { data: chapter, error } = await supabase
+        .from('chapters')
+        .select('*')
+        .eq('id', currentChapterId)
+        .single();
+
+      if (error || !chapter) {
+        container.innerHTML = "<p>❌ Error loading chapter.</p>";
+        return;
+      }
+
+      if (chapter.locked && chapter.coin_cost > 0) {
+        if (!userId) return window.location.href = "auth.html";
+        const unlocked = await unlockChapterIfNeeded(chapter.id);
+        if (!unlocked) return showUnlockModal(chapter);
+      }
+
+      // Increment views
+      await supabase
+        .from('chapters')
+        .update({ views: supabase.literal('views + 1') })
+        .eq('id', currentChapterId);
+
+      container.innerHTML = `
+        <h1>${chapter.title}</h1>
+        <p class="chapter-views">👁️ Views: <span id="viewCount"></span></p>
+        ${chapter.content}
+      `;
+
+      document.getElementById("viewCount").textContent = chapter.views || 0;
+
+      const chapterListBtn = document.getElementById('chapterListBtn');
+      chapterListBtn.style.display = 'block';
+      chapterListBtn.onclick = () => {
+        window.location.href = `book.html?id=${chapter.book_id}`;
+      };
+
+      const isDark = localStorage.getItem("chapterDarkMode") === "true";
+      const toggle = document.getElementById("darkModeToggle");
+      if (toggle) toggle.checked = isDark;
+      if (isDark) container.classList.add("dark");
+    }
+
+    async function goToNextChapter() {
+      const { data: currentChapter } = await supabase
+        .from('chapters')
+        .select('chapter_number, book_id')
+        .eq('id', currentChapterId)
+        .single();
+
+      const { chapter_number, book_id } = currentChapter;
+      const { data: nextChapters } = await supabase
+        .from('chapters')
+        .select('id')
+        .eq('book_id', book_id)
+        .gt('chapter_number', chapter_number)
+        .order('chapter_number', { ascending: true })
+        .limit(1);
+
+      if (!nextChapters?.length) {
+        alert("🚫 This is the last chapter.");
+        return;
+      }
+
+      const nextChapter = nextChapters[0];
+      window.location.href = `chapter.html?id=${nextChapter.id}`;
+    }
+
     async function showUnlockModal(chapter) {
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
       const coinCost = chapter.coin_cost || 0;
 
-      const { data: profile } = await supabase.from("profiles").select("coins").eq("id", userId).single();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("coins")
+        .eq("id", userId)
+        .single();
+
       const userCoins = profile?.coins || 0;
 
       document.getElementById("coinCost").textContent = coinCost;
@@ -223,65 +292,6 @@
       });
 
       return !error;
-    }
-
-    async function loadChapter(userId) {
-      const container = document.getElementById('chapter-content');
-      const { data: chapter, error } = await supabase
-        .from('chapters')
-        .select('*')
-        .eq('id', currentChapterId)
-        .single();
-
-      if (error || !chapter) {
-        container.innerHTML = "<p>❌ Error loading chapter.</p>";
-        return;
-      }
-
-      if (chapter.locked && chapter.coin_cost > 0) {
-        if (!userId) return window.location.href = "auth.html";
-        const unlocked = await unlockChapterIfNeeded(chapter.id);
-        if (!unlocked) return showUnlockModal(chapter);
-      }
-
-      container.innerHTML = `<h1>${chapter.title}</h1>${chapter.content}`;
-
-      const chapterListBtn = document.getElementById('chapterListBtn');
-      chapterListBtn.style.display = 'block';
-      chapterListBtn.onclick = () => {
-        window.location.href = `book.html?id=${chapter.book_id}`;
-      };
-
-      // ✅ Apply saved dark mode
-      const isDark = localStorage.getItem("chapterDarkMode") === "true";
-      const toggle = document.getElementById("darkModeToggle");
-      if (toggle) toggle.checked = isDark;
-      if (isDark) container.classList.add("dark");
-    }
-
-    async function goToNextChapter() {
-      const { data: currentChapter } = await supabase
-        .from('chapters')
-        .select('chapter_number, book_id')
-        .eq('id', currentChapterId)
-        .single();
-
-      const { chapter_number, book_id } = currentChapter;
-      const { data: nextChapters } = await supabase
-        .from('chapters')
-        .select('id')
-        .eq('book_id', book_id)
-        .gt('chapter_number', chapter_number)
-        .order('chapter_number', { ascending: true })
-        .limit(1);
-
-      if (!nextChapters?.length) {
-        alert("🚫 This is the last chapter.");
-        return;
-      }
-
-      const nextChapter = nextChapters[0];
-      window.location.href = `chapter.html?id=${nextChapter.id}`;
     }
 
     document.addEventListener("DOMContentLoaded", () => {
