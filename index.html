@@ -152,7 +152,7 @@
         }
 
         bookEl.innerHTML = `
-          ${book.cover ? `<img src="${book.cover}" alt="Cover">` : '<img src="placeholder.jpg" alt="No Cover">'}
+          ${book.cover ? `<img src="${book.cover}" class="book-cover" alt="Cover">` : '<img src="placeholder.jpg" class="book-cover" alt="No Cover">'}
           <div>
             <h2>${book.title}</h2>
             <p>${book.description || ''}</p>

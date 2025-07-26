@@ -243,3 +243,13 @@ img {
   }
 }
 
+/* ENLARGED BOOK COVER IMAGE */
+.book-cover {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  border-radius: 10px;
+  display: block;
+  margin: 10px auto;
+}
+
