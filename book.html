@@ -16,7 +16,6 @@
     }
     .locked {
       color: gray;
-      cursor: default;
     }
     .login-note {
       font-size: 13px;
@@ -102,14 +101,17 @@
         const chEl = document.createElement('div');
         chEl.className = 'chapter-link';
 
-        if (isLoggedIn || ch.coin_cost === 0) {
+        if (ch.coin_cost > 0 && !isLoggedIn) {
+          chEl.classList.add('locked');
+          chEl.innerHTML = `🔒 <strong>${ch.title}</strong><div class="login-note">Login required to unlock</div>`;
+          chEl.onclick = () => {
+            window.location.href = 'auth.html';
+          };
+        } else {
           chEl.textContent = (ch.coin_cost > 0 ? '🔒 ' : '📖 ') + ch.title;
           chEl.onclick = () => {
             window.location.href = `chapter.html?id=${ch.id}`;
           };
-        } else {
-          chEl.classList.add('locked');
-          chEl.innerHTML = `🔒 ${ch.title}<div class="login-note">Login required to unlock</div>`;
         }
 
         chaptersDiv.appendChild(chEl);
