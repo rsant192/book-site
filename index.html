@@ -85,7 +85,19 @@
   <h1>📚 My Storybooks</h1>
   <div id="auth-controls" class="auth-controls"></div>
   <button id="walletBtn" class="wallet-button" onclick="window.location.href='wallet.html'">💰 Wallet</button>
-  <div id="books"></div>
+
+ <!-- 📢 Advertisement Banner -->
+<div class="ad-banner" onclick="window.open('https://pocketfm.com/show/767e135d338072c6a947db01691ead3f3174c6e1', '_blank')">
+  <img src="ad-banner.jpg" alt="Ad Banner" class="ad-image">
+  <div class="ad-text">
+    <h3>🌟 Sponsored Message</h3>
+    <p>Click here to discover an exciting new book series!</p>
+  </div>
+</div>
+
+<div id="books"></div>
+
+ <div id="books"></div>
 
   <script>
     const supabase = window.supabase.createClient(
