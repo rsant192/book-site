@@ -96,10 +96,14 @@
   <button id="chapterListBtn" class="chapter-list-button" style="display:none;">← Back to Chapter List</button>
   <button class="home-button" onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
 
-  <!-- ✅ Toggle for Dark Mode -->
-  <label id="darkModeToggleWrapper" style="display:none; margin: 150px 10px 10px; position: fixed; left: 10px;">
-    <input type="checkbox" id="darkModeToggle"> Dark Mode for Chapter
+
+<div id="darkModeToggleWrapper">
+  <label>
+    <input type="checkbox" id="darkModeToggle" />
+    Dark Mode for Chapter
   </label>
+</div>
+
 
   <div id="chapter-content" class="chapter-content"></div>
   <button class="next-button" onclick="goToNextChapter()">Next Chapter →</button>
