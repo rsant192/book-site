@@ -1,139 +1,297 @@
-<!-- ... everything before this stays the same -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .locked {
+      color: red;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .chapter-content {
+      padding: 20px;
+      line-height: 1.7;
+      margin-bottom: 80px;
+    }
+    .back-button, .chapter-list-button, .home-button, .next-button {
+      position: fixed;
+      padding: 10px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 999;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .back-button {
+      top: 10px; left: 10px;
+      background-color: #28a745; color: white;
+    }
+    .chapter-list-button {
+      top: 60px; left: 10px;
+      background-color: #28a745; color: white;
+    }
+    .home-button {
+      top: 110px; left: 10px;
+      background-color: #ffc107; color: black;
+    }
+    .next-button {
+      bottom: 10px; right: 10px;
+      background-color: #007bff; color: white;
+      border-radius: 6px;
+    }
 
-<button class="home-button" onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      position: relative;
+    }
+    .modal-content h2 { margin-top: 0; }
+    .modal-content button {
+      padding: 10px 18px;
+      margin: 10px 5px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .confirm-btn { background-color: #007bff; color: white; }
+    .cancel-btn { background-color: #ccc; }
+    .add-coins-btn { background-color: #ffc107; color: black; }
+    .close-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: none; border: none; font-size: 20px; cursor: pointer;
+    }
 
-<!-- ✅ DARK MODE TOGGLE BUTTON (hidden by default) -->
-<label id="darkModeToggleWrapper" style="display:none; margin: 70px 10px 10px;">
-  <input type="checkbox" id="darkModeToggle"> Dark Mode for Chapter
-</label>
+    /* ✅ DARK MODE styles for chapter content */
+    #chapter-content.dark {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      border-radius: 10px;
+      padding: 20px;
+    }
+    #chapter-content.dark h1 { color: #ffffff; }
+    #chapter-content.dark p { color: #cccccc; }
+  </style>
+</head>
+<body>
+  <button class="back-button" onclick="history.back()">← Back</button>
+  <button id="chapterListBtn" class="chapter-list-button" style="display:none;">← Back to Chapter List</button>
+  <button class="home-button" onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
 
-<!-- ✅ CHAPTER CONTENT AREA -->
-<div id="chapter-content" class="chapter-content"></div>
+  <!-- ✅ Toggle for Dark Mode -->
+  <label id="darkModeToggleWrapper" style="display:none; margin: 150px 10px 10px; position: fixed; left: 10px;">
+    <input type="checkbox" id="darkModeToggle"> Dark Mode for Chapter
+  </label>
 
-<button class="next-button" onclick="goToNextChapter()">Next Chapter →</button>
+  <div id="chapter-content" class="chapter-content"></div>
+  <button class="next-button" onclick="goToNextChapter()">Next Chapter →</button>
 
-<!-- ✅ SCRIPT -->
-<script>
-  const supabase = window.supabase.createClient(
-    'https://jkjfdgjgjpybnixqwiou.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
-  );
+  <div id="unlock-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal()">×</button>
+      <h2>Unlock Chapter?</h2>
+      <p>This chapter costs <strong id="coinCost"></strong> coins.</p>
+      <p>You have <strong id="userCoins"></strong> coins.</p>
+      <div id="modal-actions"></div>
+    </div>
+  </div>
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const chapterId = urlParams.get('id');
-  let currentChapterId = chapterId;
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://jkjfdgjgjpybnixqwiou.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
+    );
 
-  checkSession();
+    const urlParams = new URLSearchParams(window.location.search);
+    const chapterId = urlParams.get('id');
+    let currentChapterId = chapterId;
 
-  async function checkSession() {
-    const { data: { session } } = await supabase.auth.getSession();
-    const stored = localStorage.getItem('session');
+    checkSession();
 
-    if (session?.user) {
-      localStorage.setItem('session', JSON.stringify(session));
-      document.getElementById("darkModeToggleWrapper").style.display = "block";
-      loadChapter(session.user.id);
-    } else if (stored) {
-      const parsed = JSON.parse(stored);
-      const { data } = await supabase.auth.setSession({
-        access_token: parsed.access_token,
-        refresh_token: parsed.refresh_token
-      });
-      if (data?.session?.user) {
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const stored = localStorage.getItem('session');
+
+      if (session?.user) {
+        localStorage.setItem('session', JSON.stringify(session));
         document.getElementById("darkModeToggleWrapper").style.display = "block";
-        return loadChapter(data.session.user.id);
+        loadChapter(session.user.id);
+      } else if (stored) {
+        const parsed = JSON.parse(stored);
+        const { data } = await supabase.auth.setSession({
+          access_token: parsed.access_token,
+          refresh_token: parsed.refresh_token
+        });
+        if (data?.session?.user) {
+          document.getElementById("darkModeToggleWrapper").style.display = "block";
+          return loadChapter(data.session.user.id);
+        }
+        return loadChapter(null);
+      } else {
+        return loadChapter(null);
       }
-      return loadChapter(null);
-    } else {
-      return loadChapter(null);
-    }
-  }
-
-  function closeModal() {
-    document.getElementById("unlock-modal").style.display = "none";
-  }
-
-  async function showUnlockModal(chapter) {
-    // unchanged
-  }
-
-  async function unlockChapterIfNeeded(chapterId) {
-    // unchanged
-  }
-
-  async function loadChapter(userId) {
-    const container = document.getElementById('chapter-content');
-    const { data: chapter, error } = await supabase
-      .from('chapters')
-      .select('*')
-      .eq('id', currentChapterId)
-      .single();
-
-    if (error || !chapter) {
-      container.innerHTML = "<p>❌ Error loading chapter.</p>";
-      return;
     }
 
-    if (chapter.locked && chapter.coin_cost > 0) {
-      if (!userId) return window.location.href = "auth.html";
-      const unlocked = await unlockChapterIfNeeded(chapter.id);
-      if (!unlocked) return showUnlockModal(chapter);
+    function closeModal() {
+      document.getElementById("unlock-modal").style.display = "none";
     }
 
-    // ✅ Render with full formatting
-    container.innerHTML = `<h1>${chapter.title}</h1>${chapter.content}`;
+    async function showUnlockModal(chapter) {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      const coinCost = chapter.coin_cost || 0;
 
-    const chapterListBtn = document.getElementById('chapterListBtn');
-    if (chapterListBtn) {
+      const { data: profile } = await supabase.from("profiles").select("coins").eq("id", userId).single();
+      const userCoins = profile?.coins || 0;
+
+      document.getElementById("coinCost").textContent = coinCost;
+      document.getElementById("userCoins").textContent = userCoins;
+
+      const actionsDiv = document.getElementById("modal-actions");
+      actionsDiv.innerHTML = "";
+
+      if (userCoins >= coinCost) {
+        const unlockBtn = document.createElement("button");
+        unlockBtn.className = "confirm-btn";
+        unlockBtn.textContent = "Yes, Unlock";
+        unlockBtn.onclick = async () => {
+          closeModal();
+          const success = await unlockChapterIfNeeded(chapter.id);
+          if (success) loadChapter(userId);
+        };
+        actionsDiv.appendChild(unlockBtn);
+      } else {
+        const sorryMsg = document.createElement("p");
+        sorryMsg.textContent = "Sorry, you don’t have enough coins.";
+        actionsDiv.appendChild(sorryMsg);
+
+        const addBtn = document.createElement("button");
+        addBtn.className = "add-coins-btn";
+        addBtn.textContent = "Add Coins";
+        addBtn.onclick = () => window.location.href = "wallet.html";
+        actionsDiv.appendChild(addBtn);
+      }
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "cancel-btn";
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.onclick = closeModal;
+      actionsDiv.appendChild(cancelBtn);
+
+      document.getElementById("unlock-modal").style.display = "flex";
+    }
+
+    async function unlockChapterIfNeeded(chapterId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) return false;
+
+      const { data: existing } = await supabase
+        .from("user_unlocks")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("chapter_id", chapterId)
+        .maybeSingle();
+
+      if (existing) return true;
+
+      const { error } = await supabase.rpc("unlock_chapter", {
+        user_id: userId,
+        chapter_id: chapterId
+      });
+
+      return !error;
+    }
+
+    async function loadChapter(userId) {
+      const container = document.getElementById('chapter-content');
+      const { data: chapter, error } = await supabase
+        .from('chapters')
+        .select('*')
+        .eq('id', currentChapterId)
+        .single();
+
+      if (error || !chapter) {
+        container.innerHTML = "<p>❌ Error loading chapter.</p>";
+        return;
+      }
+
+      if (chapter.locked && chapter.coin_cost > 0) {
+        if (!userId) return window.location.href = "auth.html";
+        const unlocked = await unlockChapterIfNeeded(chapter.id);
+        if (!unlocked) return showUnlockModal(chapter);
+      }
+
+      container.innerHTML = `<h1>${chapter.title}</h1>${chapter.content}`;
+
+      const chapterListBtn = document.getElementById('chapterListBtn');
       chapterListBtn.style.display = 'block';
       chapterListBtn.onclick = () => {
         window.location.href = `book.html?id=${chapter.book_id}`;
       };
+
+      // ✅ Apply saved dark mode
+      const isDark = localStorage.getItem("chapterDarkMode") === "true";
+      const toggle = document.getElementById("darkModeToggle");
+      if (toggle) toggle.checked = isDark;
+      if (isDark) container.classList.add("dark");
     }
 
-    // ✅ Apply dark mode if enabled
-    const isDark = localStorage.getItem("chapterDarkMode") === "true";
-    const toggle = document.getElementById("darkModeToggle");
-    if (toggle) toggle.checked = isDark;
-    if (isDark) container.classList.add("dark");
-  }
+    async function goToNextChapter() {
+      const { data: currentChapter } = await supabase
+        .from('chapters')
+        .select('chapter_number, book_id')
+        .eq('id', currentChapterId)
+        .single();
 
-  async function goToNextChapter() {
-    // unchanged
-  }
+      const { chapter_number, book_id } = currentChapter;
+      const { data: nextChapters } = await supabase
+        .from('chapters')
+        .select('id')
+        .eq('book_id', book_id)
+        .gt('chapter_number', chapter_number)
+        .order('chapter_number', { ascending: true })
+        .limit(1);
 
-  // ✅ Toggle dark mode
-  document.addEventListener("DOMContentLoaded", () => {
-    const toggle = document.getElementById("darkModeToggle");
-    const content = document.getElementById("chapter-content");
+      if (!nextChapters?.length) {
+        alert("🚫 This is the last chapter.");
+        return;
+      }
 
-    if (toggle) {
-      toggle.addEventListener("change", () => {
-        const enabled = toggle.checked;
-        content.classList.toggle("dark", enabled);
-        localStorage.setItem("chapterDarkMode", enabled);
-      });
+      const nextChapter = nextChapters[0];
+      window.location.href = `chapter.html?id=${nextChapter.id}`;
     }
-  });
-</script>
 
-<!-- ✅ DARK MODE STYLES -->
-<style>
-  #chapter-content.dark {
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-    border-radius: 10px;
-    padding: 20px;
-  }
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggle = document.getElementById("darkModeToggle");
+      const content = document.getElementById("chapter-content");
 
-  #chapter-content.dark h1 {
-    color: #ffffff;
-  }
-
-  #chapter-content.dark p {
-    color: #cccccc;
-  }
-</style>
-
+      if (toggle) {
+        toggle.addEventListener("change", () => {
+          const enabled = toggle.checked;
+          content.classList.toggle("dark", enabled);
+          localStorage.setItem("chapterDarkMode", enabled);
+        });
+      }
+    });
+  </script>
 </body>
 </html>
