@@ -153,14 +153,15 @@
         }
 
         bookEl.innerHTML = `
-          ${book.cover ? `<img src="${book.cover}" class="book-cover" alt="Cover">` : '<img src="placeholder.jpg" class="book-cover" alt="No Cover">'}
-          <div>
-            <h2>${book.title}</h2>
-            <p class="book-description">${book.description || ''}</p>
-            ${book.writer_notes ? `<p class="writer-notes">✍️ ${book.writer_notes}</p>` : ''}
-            ${freePreview}
-          </div>
-        `;
+  ${book.cover ? `<img src="${book.cover}" class="book-cover" alt="Cover">` : '<img src="placeholder.jpg" class="book-cover" alt="No Cover">'}
+  <div class="book-info">
+    <h2>${book.title}</h2>
+    <p class="book-description">${book.description || ''}</p>
+    ${book.writer_notes ? `<p class="writer-notes">✍️ ${book.writer_notes}</p>` : ''}
+    ${freePreview}
+  </div>
+`;
+
 
         booksDiv.appendChild(bookEl);
       }
