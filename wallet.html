@@ -107,25 +107,32 @@
 
     let userId = null;
 
-    async function loadBalance() {
-      let { data: { session } } = await supabase.auth.getSession();
+    async function initUserSession() {
+      const { data: { session } } = await supabase.auth.getSession();
 
-      if (!session || !session.user) {
-        const stored = localStorage.getItem("session");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const { data, error } = await supabase.auth.setSession({
-            access_token: parsed.access_token,
-            refresh_token: parsed.refresh_token
-          });
-          if (data?.session?.user) session = data.session;
-          else return window.location.href = "auth.html";
-        } else {
-          return window.location.href = "auth.html";
-        }
+      if (session?.user) return session.user.id;
+
+      const stored = localStorage.getItem("session");
+      if (!stored) {
+        window.location.href = "auth.html";
+        return null;
       }
 
-      userId = session.user.id;
+      const parsed = JSON.parse(stored);
+      const { data } = await supabase.auth.setSession({
+        access_token: parsed.access_token,
+        refresh_token: parsed.refresh_token
+      });
+
+      if (data?.session?.user) return data.session.user.id;
+
+      window.location.href = "auth.html";
+      return null;
+    }
+
+    async function loadBalance() {
+      userId = await initUserSession();
+      if (!userId) return;
 
       const { data, error } = await supabase
         .from('profiles')
@@ -140,7 +147,6 @@
 
       const coins = data?.coins || 0;
       document.getElementById("balance").innerText = `🔸 You have ${coins} coins`;
-
       loadAnalytics();
     }
 
@@ -155,13 +161,8 @@
         return;
       }
 
-      let totalCoins = 0;
-      let totalUsd = 0;
-
-      for (let row of data) {
-        totalCoins += row.coins_purchased;
-        totalUsd += row.paid_usd;
-      }
+      const totalCoins = data.reduce((sum, row) => sum + (row.coins_purchased || 0), 0);
+      const totalUsd = data.reduce((sum, row) => sum + (row.paid_usd || 0), 0);
 
       document.getElementById("analytics").innerHTML = `
         <p>🧾 Total Coins Purchased: <strong>${totalCoins}</strong></p>
@@ -170,7 +171,7 @@
     }
 
     async function addCoins(amount, priceInUsd) {
-      if (!userId) return alert("⚠️ Not logged in.");
+      if (!userId) return alert("⚠️ You are not logged in.");
 
       const { error: rpcError } = await supabase.rpc('add_coins', {
         user_id: userId,
@@ -185,7 +186,8 @@
       await supabase.from('coin_purchases').insert({
         user_id: userId,
         coins_purchased: amount,
-        paid_usd: priceInUsd
+        paid_usd: priceInUsd,
+        purchased_at: new Date().toISOString()
       });
 
       alert(`✅ You received ${amount} coins!`);
@@ -207,7 +209,10 @@
           await actions.order.capture();
           addCoins(coinAmount, price);
         },
-        onError: err => alert("❌ Payment failed. Try again.")
+        onError: err => {
+          console.error("❌ PayPal Error:", err);
+          alert("❌ Payment failed. Try again.");
+        }
       }).render(`#paypal-${buttonId}`);
     }
 
@@ -220,7 +225,7 @@
       }
     }
 
-    // Load everything
+    // START
     loadBalance().then(() => {
       setupPayPal('100', 100, 1);
       setupPayPal('200', 200, 2);
