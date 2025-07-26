@@ -155,28 +155,24 @@ img {
     margin: 0 0 10px 0;
   }
 
-  .back-button, .home-button, .next-button {
-    font-size: 12px;
+  /* Make navigation buttons stack and stop covering content */
+  .back-button,
+  .home-button,
+  .next-button,
+  .chapter-list-button {
+    position: static;
+    display: block;
+    width: 90%;
+    margin: 10px auto;
+    font-size: 13px;
     padding: 8px 10px;
+    box-shadow: none;
   }
 
-  .back-button {
-    top: 10px;
-    left: 10px;
-  }
-
-  .home-button {
-    top: 55px;
-    left: 10px;
-  }
-
-  .next-button {
-    bottom: 10px;
-    right: 10px;
-  }
-
+  /* Chapter content spacing fix */
   .chapter-content {
     padding: 10px;
+    margin-top: 10px;
   }
 
   .chapter-content h1 {
@@ -186,5 +182,12 @@ img {
   .chapter-content p {
     font-size: 15px;
     line-height: 1.6;
+  }
+
+  /* Modal button adjustment for PayPal/Unlock */
+  .modal-content button {
+    width: 100%;
+    margin: 8px 0;
+    font-size: 14px;
   }
 }
