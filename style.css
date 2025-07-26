@@ -253,3 +253,13 @@ img {
   margin: 10px auto;
 }
 
+.book-description {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 5px 0;
+}
+
+
