@@ -173,6 +173,10 @@
     async function addCoins(amount, priceInUsd) {
       if (!userId) return alert("⚠️ You are not logged in.");
 
+      // Get email of the current user (not shown to user)
+      const { data: userData } = await supabase.auth.getUser();
+      const email = userData?.user?.email || '';
+
       const { error: rpcError } = await supabase.rpc('add_coins', {
         user_id: userId,
         coin_amount: amount
@@ -185,6 +189,7 @@
 
       await supabase.from('coin_purchases').insert({
         user_id: userId,
+        user_email: email,
         coins_purchased: amount,
         paid_usd: priceInUsd,
         purchased_at: new Date().toISOString()
@@ -225,7 +230,6 @@
       }
     }
 
-    // START
     loadBalance().then(() => {
       setupPayPal('100', 100, 1);
       setupPayPal('200', 200, 2);
