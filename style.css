@@ -212,3 +212,20 @@ img {
     font-size: 14px;
   }
 }
+
+/* DARK MODE STYLES (only affects chapter content) */
+body.dark-mode .chapter-content {
+  background-color: #121212;
+  color: #e0e0e0;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+body.dark-mode .chapter-content h1 {
+  color: #ffffff;
+}
+
+body.dark-mode .chapter-content p {
+  color: #d0d0d0;
+}
+
