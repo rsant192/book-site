@@ -61,16 +61,21 @@ body {
   display: flex;
   gap: 15px;
   align-items: flex-start;
-  border: 1px solid #ddd;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  transition: background-color 0.2s;
+  padding: 16px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   flex-wrap: nowrap;
+  cursor: pointer;
 }
-.book:hover {
-  background-color: #f9f9f9;
+
+.book-card:hover, .book:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
 }
+
 
 .book-info {
   flex: 1;
