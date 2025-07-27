@@ -1,10 +1,12 @@
 /* GLOBAL STYLES */
 
 .ad-banner {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 16px;
-  background: linear-gradient(to right, #fff7e6, #ffecd2);
+  background: linear-gradient(135deg, #fff7e6, #ffecd2);
+  background-size: 300% 300%;
   border-left: 6px solid #ffc107;
   border-radius: 14px;
   padding: 16px 20px;
@@ -12,12 +14,16 @@
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: sparkleGradient 5s ease infinite;
+  overflow: hidden;
+  z-index: 0;
 }
 
 .ad-banner:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 18px rgba(255, 193, 7, 0.3);
 }
+
 
 .ad-image {
   max-width: 80px;
@@ -327,3 +333,39 @@ img {
   display: inline-block;
   margin-top: 4px;
 }
+
+
+/* Shimmering sparkle animation */
+@keyframes sparkleGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Moving glitter overlay */
+.ad-banner::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-image: radial-gradient(white 1px, transparent 1px),
+                    radial-gradient(white 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+  pointer-events: none;
+  animation: sparkleMove 3s linear infinite;
+  opacity: 0.25;
+  z-index: 1;
+}
+
+@keyframes sparkleMove {
+  0% { background-position: 0 0, 10px 10px; }
+  100% { background-position: 20px 20px, 30px 30px; }
+}
+
+/* Make sure ad content stays above sparkles */
+.ad-text, .ad-image {
+  position: relative;
+  z-index: 2;
+}
+
