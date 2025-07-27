@@ -1,0 +1,17 @@
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, s-maxage=0"
+        },
+        {
+          "key": "Accept-Ranges",
+          "value": "none"
+        }
+      ]
+    }
+  ]
+}
