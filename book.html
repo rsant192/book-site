@@ -79,18 +79,25 @@ function formatNumber(n) {
 }
 
 async function loadBookTitle(bookId) {
-  const { data, error } = await supabase
+  const { data: book, error: bookError } = await supabase
     .from('books')
-    .select('title, view_count')
+    .select('title, author')  // Add author if you want it
     .eq('id', bookId)
     .single();
 
-  if (!error && data) {
-    document.getElementById('book-title').innerHTML = `
-      <h1>${data.title}</h1>
-      <p style="font-size: 14px; color: #777;">👁️ ${formatNumber(data.view_count)} views</p>
-    `;
-  }
+  const { data: chapters, error: chapterError } = await supabase
+    .from('chapters')
+    .select('view_count')
+    .eq('book_id', bookId);
+
+  if (bookError || chapterError || !book || !chapters) return;
+
+  const totalViews = chapters.reduce((sum, ch) => sum + (ch.view_count || 0), 0);
+
+  document.getElementById('book-title').innerHTML = `
+    <h1>${book.title}</h1>
+    <p style="font-size: 14px; color: #777;">👁️ ${formatNumber(totalViews)} views</p>
+  `;
 }
 
 
