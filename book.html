@@ -78,7 +78,7 @@
   let unlockedChapterIds = [];
   let allChapters = [];
   let currentPage = 1;
-  const perPage = 51;
+  const perPage = 50;
 
   function formatNumber(n) {
     return n ? n.toLocaleString() : '0';
@@ -191,7 +191,7 @@
     const select = document.createElement('select');
     select.style.margin = '0 10px';
     for (let i = 1; i <= totalPages; i++) {
-      const start = (i - 1) * perPage;
+      const start = (i) * perPage;
       const end = Math.min(i * perPage, allChapters.length);
       const option = document.createElement('option');
       option.value = i;
