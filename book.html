@@ -74,6 +74,9 @@
 
   let isLoggedIn = false;
   let unlockedChapterIds = [];
+  let allChapters = [];
+  let currentPage = 1;
+  const perPage = 100;
 
   function formatNumber(n) {
     return n ? n.toLocaleString() : '0';
@@ -102,18 +105,16 @@
   }
 
   async function loadBookTitle(bookId) {
-    const { data: book, error: bookError } = await supabase
+    const { data: book } = await supabase
       .from('books')
-      .select('title, author')
+      .select('title')
       .eq('id', bookId)
       .single();
 
-    const { data: chapters, error: chapterError } = await supabase
+    const { data: chapters } = await supabase
       .from('chapters')
       .select('view_count')
       .eq('book_id', bookId);
-
-    if (bookError || chapterError || !book || !chapters) return;
 
     const totalViews = chapters.reduce((sum, ch) => sum + (ch.view_count || 0), 0);
 
@@ -124,50 +125,109 @@
   }
 
   async function loadChapters() {
-    const { data: chapters, error } = await supabase
+    const { data, error } = await supabase
       .from('chapters')
       .select('*')
       .eq('book_id', bookId)
       .order('chapter_number', { ascending: true });
 
-    const chaptersDiv = document.getElementById('chapters');
-
-    if (error || !chapters || chapters.length === 0) {
-      chaptersDiv.innerHTML = '<p>No chapters found or error loading.</p>';
+    if (error || !data || data.length === 0) {
+      document.getElementById('chapters').innerHTML = '<p>No chapters found.</p>';
       return;
     }
+
+    allChapters = data;
+    renderPagination();
+    renderChapters(currentPage);
+  }
+
+  function renderChapters(page) {
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    const chapters = allChapters.slice(start, end);
+
+    const chaptersDiv = document.getElementById('chapters');
+    chaptersDiv.innerHTML = '';
 
     for (const ch of chapters) {
       const chEl = document.createElement('div');
       chEl.className = 'chapter-link';
 
-      if (ch.coin_cost > 0 && !isLoggedIn) {
-        chEl.classList.add('locked');
-        chEl.innerHTML = `🔒 <strong>${ch.title}</strong><div class="login-note">Login required to unlock</div>`;
-        chEl.onclick = () => {
-          window.location.href = 'auth.html';
-        };
-      } else {
-        let icon = '📖';
-        if (ch.coin_cost > 0) {
-          icon = unlockedChapterIds.includes(ch.id) ? '🔓🔸' : '🔒';
-        }
-
-        chEl.innerHTML = `
-          ${icon} <strong>${ch.title}</strong><br>
-          <span style="font-size: 13px; color: #999;">👁️ ${formatNumber(ch.view_count || 0)} views</span>
-        `;
-        chEl.onclick = () => {
-          window.location.href = `chapter.html?id=${ch.id}`;
-        };
+      let icon = '📖';
+      if (ch.coin_cost > 0) {
+        icon = unlockedChapterIds.includes(ch.id) ? '🔓🔸' : '🔒';
       }
+
+      chEl.innerHTML = `
+        ${icon} <strong>${ch.title}</strong><br>
+        <span style="font-size: 13px; color: #999;">👁️ ${formatNumber(ch.view_count || 0)} views</span>
+      `;
+
+      chEl.onclick = () => {
+        if (ch.coin_cost > 0 && !isLoggedIn) {
+          window.location.href = 'auth.html';
+        } else {
+          window.location.href = `chapter.html?id=${ch.id}`;
+        }
+      };
 
       chaptersDiv.appendChild(chEl);
     }
   }
 
+  function renderPagination() {
+    const totalPages = Math.ceil(allChapters.length / perPage);
+    const container = document.createElement('div');
+    container.style.textAlign = 'center';
+    container.style.margin = '20px 0';
+
+    // Dropdown
+    const select = document.createElement('select');
+    select.style.margin = '0 10px';
+    for (let i = 1; i <= totalPages; i++) {
+      const start = (i - 1) * perPage + 1;
+      const end = i * perPage;
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = `Chapters ${start}-${end}`;
+      if (i === currentPage) option.selected = true;
+      select.appendChild(option);
+    }
+    select.onchange = () => {
+      currentPage = parseInt(select.value);
+      renderChapters(currentPage);
+      renderPagination();
+    };
+
+    // Prev Button
+    const prev = document.createElement('button');
+    prev.textContent = '← Previous';
+    prev.disabled = currentPage === 1;
+    prev.onclick = () => {
+      currentPage--;
+      renderChapters(currentPage);
+      renderPagination();
+    };
+
+    // Next Button
+    const next = document.createElement('button');
+    next.textContent = 'Next →';
+    next.disabled = currentPage === totalPages;
+    next.onclick = () => {
+      currentPage++;
+      renderChapters(currentPage);
+      renderPagination();
+    };
+
+    container.appendChild(prev);
+    container.appendChild(select);
+    container.appendChild(next);
+
+    const chaptersDiv = document.getElementById('chapters');
+    chaptersDiv.appendChild(container);
+  }
+
   checkSessionAndLoad();
 </script>
-
   </body>
 </html>
