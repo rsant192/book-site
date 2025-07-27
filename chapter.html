@@ -244,7 +244,8 @@
         if (!unlocked) return showUnlockModal(chapter);
       }
 
-      container.innerHTML = `<h1>${chapter.title}</h1>${chapter.content}`;
+     container.innerHTML = `<h1>${chapter.title}</h1><div style="white-space: pre-wrap; line-height: 1.7;">${chapter.content}</div>`;
+
 
       const chapterListBtn = document.getElementById('chapterListBtn');
       chapterListBtn.style.display = 'block';
