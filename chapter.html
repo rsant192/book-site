@@ -233,24 +233,15 @@
         .eq('id', currentChapterId)
         .single();
 if (!error && chapter) {
-  const isFree = !chapter.locked || chapter.coin_cost === 0;
   const isUnlocked = userId && await unlockChapterIfNeeded(chapter.id);
+const isFree = !chapter.locked || chapter.coin_cost === 0;
+const showChapter = isFree || isUnlocked;
 
-  if (isFree || isUnlocked) {
-    await supabase
-      .from('chapters')
-      .update({ view_count: (chapter.view_count || 0) + 1 })
-      .eq('id', currentChapterId);
-  }
-const lockIcon = document.getElementById("lock-status-icon");
-if (lockIcon) {
-  if (isFree || isUnlocked) {
-    lockIcon.textContent = "🔓🔸";
-    lockIcon.className = "unlocked";
-  } else {
-    lockIcon.textContent = "🔒";
-    lockIcon.className = "locked";
-  }
+if (showChapter) {
+  await supabase
+    .from('chapters')
+    .update({ view_count: (chapter.view_count || 0) + 1 })
+    .eq('id', currentChapterId);
 }
 
 
@@ -259,11 +250,11 @@ if (lockIcon) {
         return;
       }
 
-      if (chapter.locked && chapter.coin_cost > 0) {
-        if (!userId) return window.location.href = "auth.html";
-        const unlocked = await unlockChapterIfNeeded(chapter.id);
-        if (!unlocked) return showUnlockModal(chapter);
-      }
+      if (!showChapter) {
+  if (!userId) return window.location.href = "auth.html";
+  return showUnlockModal(chapter);
+}
+
 
       container.innerHTML = `
   <h1 style="display:flex; align-items:center; gap:10px;">
@@ -278,7 +269,7 @@ if (lockIcon) {
 
 const lockIcon = document.getElementById("lock-status-icon");
 if (lockIcon) {
-  if (!chapter.locked || chapter.coin_cost === 0 || (userId && await unlockChapterIfNeeded(chapter.id))) {
+  if (showChapter) {
     lockIcon.textContent = "🔓🔸";
     lockIcon.className = "unlocked";
   } else {
