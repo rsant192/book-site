@@ -62,6 +62,7 @@
   <h1>📖 Chapters</h1>
 </div>
   <div id="chapters"></div>
+<div id="pagination-controls"></div>
 <script>
   const supabase = window.supabase.createClient(
     'https://jkjfdgjgjpybnixqwiou.supabase.co',
@@ -176,56 +177,56 @@
   }
 
   function renderPagination() {
-    const totalPages = Math.ceil(allChapters.length / perPage);
-    const container = document.createElement('div');
-    container.style.textAlign = 'center';
-    container.style.margin = '20px 0';
+  const totalPages = Math.ceil(allChapters.length / perPage);
+  const container = document.getElementById('pagination-controls');
+  container.innerHTML = '';
+  container.style.textAlign = 'center';
+  container.style.margin = '20px 0';
 
-    // Dropdown
-    const select = document.createElement('select');
-    select.style.margin = '0 10px';
-    for (let i = 1; i <= totalPages; i++) {
-      const start = (i - 1) * perPage + 1;
-      const end = i * perPage;
-      const option = document.createElement('option');
-      option.value = i;
-      option.textContent = `Chapters ${start}-${end}`;
-      if (i === currentPage) option.selected = true;
-      select.appendChild(option);
-    }
-    select.onchange = () => {
-      currentPage = parseInt(select.value);
-      renderChapters(currentPage);
-      renderPagination();
-    };
-
-    // Prev Button
-    const prev = document.createElement('button');
-    prev.textContent = '← Previous';
-    prev.disabled = currentPage === 1;
-    prev.onclick = () => {
-      currentPage--;
-      renderChapters(currentPage);
-      renderPagination();
-    };
-
-    // Next Button
-    const next = document.createElement('button');
-    next.textContent = 'Next →';
-    next.disabled = currentPage === totalPages;
-    next.onclick = () => {
-      currentPage++;
-      renderChapters(currentPage);
-      renderPagination();
-    };
-
-    container.appendChild(prev);
-    container.appendChild(select);
-    container.appendChild(next);
-
-    const chaptersDiv = document.getElementById('chapters');
-    chaptersDiv.appendChild(container);
+  // Dropdown
+  const select = document.createElement('select');
+  select.style.margin = '0 10px';
+  for (let i = 1; i <= totalPages; i++) {
+    const start = (i - 1) * perPage + 1;
+    const end = Math.min(i * perPage, allChapters.length);
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = `Chapters ${start}-${end}`;
+    if (i === currentPage) option.selected = true;
+    select.appendChild(option);
   }
+  select.onchange = () => {
+    currentPage = parseInt(select.value);
+    renderChapters(currentPage);
+    renderPagination();
+  };
+
+  // Prev Button
+  const prev = document.createElement('button');
+  prev.textContent = '← Previous';
+  prev.disabled = currentPage === 1;
+  prev.style.marginRight = '10px';
+  prev.onclick = () => {
+    currentPage--;
+    renderChapters(currentPage);
+    renderPagination();
+  };
+
+  // Next Button
+  const next = document.createElement('button');
+  next.textContent = 'Next →';
+  next.disabled = currentPage === totalPages;
+  next.style.marginLeft = '10px';
+  next.onclick = () => {
+    currentPage++;
+    renderChapters(currentPage);
+    renderPagination();
+  };
+
+  container.appendChild(prev);
+  container.appendChild(select);
+  container.appendChild(next);
+}
 
   checkSessionAndLoad();
 </script>
