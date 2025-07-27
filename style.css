@@ -372,7 +372,8 @@ img {
 }
 
 
-#pagination-controls button {
+#pagination-controls-top button,
+#pagination-controls-bottom button {
   padding: 8px 14px;
   font-size: 15px;
   cursor: pointer;
@@ -381,13 +382,9 @@ img {
   background-color: #f1f1f1;
   margin: 0 5px;
 }
-#pagination-controls button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-#pagination-controls select {
+#pagination-controls-top select,
+#pagination-controls-bottom select {
   padding: 8px;
   font-size: 15px;
   margin: 0 5px;
 }
-

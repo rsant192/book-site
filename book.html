@@ -61,8 +61,9 @@
   <div id="book-title">
   <h1>📖 Chapters</h1>
 </div>
-  <div id="chapters"></div>
-<div id="pagination-controls"></div>
+  <div id="pagination-controls-top"></div>
+<div id="chapters"></div>
+<div id="pagination-controls-bottom"></div>
 <script>
   const supabase = window.supabase.createClient(
     'https://jkjfdgjgjpybnixqwiou.supabase.co',
@@ -77,7 +78,7 @@
   let unlockedChapterIds = [];
   let allChapters = [];
   let currentPage = 1;
-  const perPage = 100;
+  const perPage = 50;
 
   function formatNumber(n) {
     return n ? n.toLocaleString() : '0';
@@ -178,55 +179,67 @@
 
   function renderPagination() {
   const totalPages = Math.ceil(allChapters.length / perPage);
-  const container = document.getElementById('pagination-controls');
-  container.innerHTML = '';
-  container.style.textAlign = 'center';
-  container.style.margin = '20px 0';
 
-  // Dropdown
-  const select = document.createElement('select');
-  select.style.margin = '0 10px';
-  for (let i = 1; i <= totalPages; i++) {
-    const start = (i - 1) * perPage + 1;
-    const end = Math.min(i * perPage, allChapters.length);
-    const option = document.createElement('option');
-    option.value = i;
-    option.textContent = `Chapters ${start}-${end}`;
-    if (i === currentPage) option.selected = true;
-    select.appendChild(option);
+  // Function to create one pagination block
+  function createControls(containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    container.style.textAlign = 'center';
+    container.style.margin = '20px 0';
+
+    // Dropdown
+    const select = document.createElement('select');
+    select.style.margin = '0 10px';
+    for (let i = 1; i <= totalPages; i++) {
+      const start = (i - 1) * perPage + 1;
+      const end = Math.min(i * perPage, allChapters.length);
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = `Chapters ${start}-${end}`;
+      if (i === currentPage) option.selected = true;
+      select.appendChild(option);
+    }
+    select.onchange = () => {
+      currentPage = parseInt(select.value);
+      renderChapters(currentPage);
+      renderPagination();
+      window.scrollTo(0, 0); // Scroll to top when page changes
+    };
+
+    // Prev Button
+    const prev = document.createElement('button');
+    prev.textContent = '← Previous';
+    prev.disabled = currentPage === 1;
+    prev.style.marginRight = '10px';
+    prev.onclick = () => {
+      currentPage--;
+      renderChapters(currentPage);
+      renderPagination();
+      window.scrollTo(0, 0); // Scroll to top when page changes
+    };
+
+    // Next Button
+    const next = document.createElement('button');
+    next.textContent = 'Next →';
+    next.disabled = currentPage === totalPages;
+    next.style.marginLeft = '10px';
+    next.onclick = () => {
+      currentPage++;
+      renderChapters(currentPage);
+      renderPagination();
+      window.scrollTo(0, 0); // Scroll to top when page changes
+    };
+
+    container.appendChild(prev);
+    container.appendChild(select);
+    container.appendChild(next);
   }
-  select.onchange = () => {
-    currentPage = parseInt(select.value);
-    renderChapters(currentPage);
-    renderPagination();
-  };
 
-  // Prev Button
-  const prev = document.createElement('button');
-  prev.textContent = '← Previous';
-  prev.disabled = currentPage === 1;
-  prev.style.marginRight = '10px';
-  prev.onclick = () => {
-    currentPage--;
-    renderChapters(currentPage);
-    renderPagination();
-  };
-
-  // Next Button
-  const next = document.createElement('button');
-  next.textContent = 'Next →';
-  next.disabled = currentPage === totalPages;
-  next.style.marginLeft = '10px';
-  next.onclick = () => {
-    currentPage++;
-    renderChapters(currentPage);
-    renderPagination();
-  };
-
-  container.appendChild(prev);
-  container.appendChild(select);
-  container.appendChild(next);
+  // Create both top and bottom controls
+  createControls('pagination-controls-top');
+  createControls('pagination-controls-bottom');
 }
+
 
   checkSessionAndLoad();
 </script>
