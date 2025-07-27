@@ -13,5 +13,18 @@
         }
       ]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://www.mybookseries.org/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "mybookseries.org"
+        }
+      ],
+      "permanent": true
+    }
   ]
 }
