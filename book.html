@@ -145,11 +145,13 @@
   }
 
   function renderChapters(page) {
-    const start = (page - 1) * perPage;
-    const end = start + perPage;
-    const chapters = allChapters.slice(start, end);
-
-    const chaptersDiv = document.getElementById('chapters');
+console.log("🔹 Rendering Page:", page);
+const start = (page - 1) * perPage;
+const end = start + perPage;
+console.log("Start:", start, "End:", end, "Total:", allChapters.length);
+const chapters = allChapters.slice(start, end);
+console.log("Chapters on this page:", chapters.map(ch => ch.chapter_number));
+        const chaptersDiv = document.getElementById('chapters');
     chaptersDiv.innerHTML = '';
 
     for (const ch of chapters) {
