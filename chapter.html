@@ -232,6 +232,17 @@
         .select('*')
         .eq('id', currentChapterId)
         .single();
+if (!error && chapter) {
+  const isFree = !chapter.locked || chapter.coin_cost === 0;
+  const isUnlocked = userId && await unlockChapterIfNeeded(chapter.id);
+
+  if (isFree || isUnlocked) {
+    await supabase
+      .from('chapters')
+      .update({ view_count: (chapter.view_count || 0) + 1 })
+      .eq('id', currentChapterId);
+  }
+}
 
       if (error || !chapter) {
         container.innerHTML = "<p>❌ Error loading chapter.</p>";
@@ -244,7 +255,10 @@
         if (!unlocked) return showUnlockModal(chapter);
       }
 
-     container.innerHTML = `<h1>${chapter.title}</h1><div style="white-space: pre-wrap; line-height: 1.7;">${chapter.content}</div>`;
+   container.innerHTML = `
+  <h1>${chapter.title}</h1>
+  ${chapter.audio_url ? `<audio controls style="margin-bottom: 20px; width: 100%;"><source src="${chapter.audio_url}" type="audio/mpeg">Your browser does not support the audio element.</audio>` : ''}
+  <div style="white-space: pre-wrap; line-height: 1.7;">${chapter.content}</div>`;
 
 
       const chapterListBtn = document.getElementById('chapterListBtn');

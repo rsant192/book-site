@@ -58,7 +58,9 @@
   <button class="back-button" onclick="history.back()">← Back</button>
   <button class="home-button" onclick="window.location.href='index.html'">🏠 Back to Homepage</button>
 
+  <div id="book-title">
   <h1>📖 Chapters</h1>
+</div>
   <div id="chapters"></div>
 
   <script>
@@ -72,6 +74,25 @@
     localStorage.setItem("lastBookId", bookId);
 
     let isLoggedIn = false;
+function formatNumber(n) {
+  return n ? n.toLocaleString() : '0';
+}
+
+async function loadBookTitle(bookId) {
+  const { data, error } = await supabase
+    .from('books')
+    .select('title, view_count')
+    .eq('id', bookId)
+    .single();
+
+  if (!error && data) {
+    document.getElementById('book-title').innerHTML = `
+      <h1>${data.title}</h1>
+      <p style="font-size: 14px; color: #777;">👁️ ${formatNumber(data.view_count)} views</p>
+    `;
+  }
+}
+
 
     checkSessionAndLoad();
 
@@ -81,7 +102,8 @@
         isLoggedIn = true;
         localStorage.setItem('session', JSON.stringify(session));
       }
-      loadChapters();
+      loadBookTitle(bookId);
+loadChapters();
     }
 
     async function loadChapters() {
@@ -109,7 +131,10 @@
             window.location.href = 'auth.html';
           };
         } else {
-          chEl.textContent = (ch.coin_cost > 0 ? '🔒 ' : '📖 ') + ch.title;
+          chEl.innerHTML = `
+  ${(ch.coin_cost > 0 ? '🔒' : '📖')} <strong>${ch.title}</strong><br>
+  <span style="font-size: 13px; color: #999;">👁️ ${formatNumber(ch.view_count || 0)} views</span>
+`;
           chEl.onclick = () => {
             window.location.href = `chapter.html?id=${ch.id}`;
           };
