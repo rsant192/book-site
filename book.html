@@ -191,7 +191,7 @@
     const select = document.createElement('select');
     select.style.margin = '0 10px';
     for (let i = 1; i <= totalPages; i++) {
-      const start = (i - 1) * perPage + 1;
+      const start = (i - 1) * perPage;
       const end = Math.min(i * perPage, allChapters.length);
       const option = document.createElement('option');
       option.value = i;
