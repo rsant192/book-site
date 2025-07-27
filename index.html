@@ -162,7 +162,7 @@
   .from('chapters')
   .select('view_count, id, coin_cost')
   .eq('book_id', book.id)
-  .order('id', { ascending: true }); // ✅ Fix for correct first chapter
+ .order('chapter_number', { ascending: true });
 
     const totalViews = chapters?.reduce((sum, ch) => sum + (ch.view_count || 0), 0) || 0;
 
