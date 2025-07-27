@@ -159,9 +159,10 @@
   for (const book of books) {
     // 🔸 Fetch chapters with view_count for this book
     const { data: chapters } = await supabase
-      .from('chapters')
-      .select('view_count, id, coin_cost')
-      .eq('book_id', book.id);
+  .from('chapters')
+  .select('view_count, id, coin_cost')
+  .eq('book_id', book.id)
+  .order('id', { ascending: true }); // ✅ Fix for correct first chapter
 
     const totalViews = chapters?.reduce((sum, ch) => sum + (ch.view_count || 0), 0) || 0;
 
