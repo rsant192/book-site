@@ -3,32 +3,45 @@
 .ad-banner {
   display: flex;
   align-items: center;
-  background-color: #fff4e5;
-  border: 1px solid #ffc107;
-  border-radius: 10px;
-  padding: 15px;
+  gap: 16px;
+  background: linear-gradient(to right, #fff7e6, #ffecd2);
+  border-left: 6px solid #ffc107;
+  border-radius: 14px;
+  padding: 16px 20px;
   margin-bottom: 20px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
+
 .ad-banner:hover {
-  background-color: #ffe8ba;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(255, 193, 7, 0.3);
 }
+
 .ad-image {
-  max-width: 100px;
-  border-radius: 8px;
-  margin-right: 15px;
+  max-width: 80px;
+  min-width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
+
 .ad-text h3 {
-  margin: 0 0 5px;
+  margin: 0 0 6px;
   font-size: 18px;
-  color: #cc7a00;
+  font-weight: bold;
+  color: #d17a00;
 }
+
 .ad-text p {
   margin: 0;
   font-size: 14px;
-  color: #444;
+  color: #555;
+  line-height: 1.5;
 }
+
 
 body {
   font-family: Arial, sans-serif;
@@ -196,6 +209,18 @@ img {
 
 /* MOBILE FRIENDLY ADJUSTMENTS */
 @media (max-width: 600px) {
+
+.ad-banner {
+  flex-direction: column;
+  text-align: center;
+  align-items: center;
+}
+
+.ad-image {
+  margin-bottom: 10px;
+  margin-right: 0;
+}
+
   body {
     padding: 10px;
     max-width: 100%;
