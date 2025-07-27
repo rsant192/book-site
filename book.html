@@ -62,93 +62,112 @@
   <h1>📖 Chapters</h1>
 </div>
   <div id="chapters"></div>
+<script>
+  const supabase = window.supabase.createClient(
+    'https://jkjfdgjgjpybnixqwiou.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
+  );
 
-  <script>
-    const supabase = window.supabase.createClient(
-      'https://jkjfdgjgjpybnixqwiou.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpramZkZ2pnanB5Ym5peHF3aW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODI4NzksImV4cCI6MjA2ODc1ODg3OX0.XM95GXmP3gzwSIbidgekFZVeHArLfdXszLAwdqV3Y6w'
-    );
+  const urlParams = new URLSearchParams(window.location.search);
+  const bookId = urlParams.get('id');
+  localStorage.setItem("lastBookId", bookId);
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const bookId = urlParams.get('id');
-    localStorage.setItem("lastBookId", bookId);
+  let isLoggedIn = false;
+  let unlockedChapterIds = [];
 
-    let isLoggedIn = false;
-function formatNumber(n) {
-  return n ? n.toLocaleString() : '0';
-}
+  function formatNumber(n) {
+    return n ? n.toLocaleString() : '0';
+  }
 
-async function loadBookTitle(bookId) {
-  const { data: book, error: bookError } = await supabase
-    .from('books')
-    .select('title, author')  // Add author if you want it
-    .eq('id', bookId)
-    .single();
+  async function checkSessionAndLoad() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session && session.user) {
+      isLoggedIn = true;
+      localStorage.setItem('session', JSON.stringify(session));
+      await fetchUnlockedChapters(session.user.id);
+    }
+    await loadBookTitle(bookId);
+    await loadChapters();
+  }
 
-  const { data: chapters, error: chapterError } = await supabase
-    .from('chapters')
-    .select('view_count')
-    .eq('book_id', bookId);
+  async function fetchUnlockedChapters(userId) {
+    const { data, error } = await supabase
+      .from('user_unlocks')
+      .select('chapter_id')
+      .eq('user_id', userId);
 
-  if (bookError || chapterError || !book || !chapters) return;
+    if (!error && data) {
+      unlockedChapterIds = data.map(d => d.chapter_id);
+    }
+  }
 
-  const totalViews = chapters.reduce((sum, ch) => sum + (ch.view_count || 0), 0);
+  async function loadBookTitle(bookId) {
+    const { data: book, error: bookError } = await supabase
+      .from('books')
+      .select('title, author')
+      .eq('id', bookId)
+      .single();
 
-  document.getElementById('book-title').innerHTML = `
-    <h1>${book.title}</h1>
-    <p style="font-size: 14px; color: #777;">👁️ ${formatNumber(totalViews)} views</p>
-  `;
-}
+    const { data: chapters, error: chapterError } = await supabase
+      .from('chapters')
+      .select('view_count')
+      .eq('book_id', bookId);
 
-    checkSessionAndLoad();
+    if (bookError || chapterError || !book || !chapters) return;
 
-    async function checkSessionAndLoad() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session && session.user) {
-        isLoggedIn = true;
-        localStorage.setItem('session', JSON.stringify(session));
-      }
-      loadBookTitle(bookId);
-loadChapters();
+    const totalViews = chapters.reduce((sum, ch) => sum + (ch.view_count || 0), 0);
+
+    document.getElementById('book-title').innerHTML = `
+      <h1>${book.title}</h1>
+      <p style="font-size: 14px; color: #777;">👁️ ${formatNumber(totalViews)} views</p>
+    `;
+  }
+
+  async function loadChapters() {
+    const { data: chapters, error } = await supabase
+      .from('chapters')
+      .select('*')
+      .eq('book_id', bookId)
+      .order('chapter_number', { ascending: true });
+
+    const chaptersDiv = document.getElementById('chapters');
+
+    if (error || !chapters || chapters.length === 0) {
+      chaptersDiv.innerHTML = '<p>No chapters found or error loading.</p>';
+      return;
     }
 
-    async function loadChapters() {
-      const { data: chapters, error } = await supabase
-        .from('chapters')
-        .select('*')
-        .eq('book_id', bookId)
-        .order('chapter_number', { ascending: true });
+    for (const ch of chapters) {
+      const chEl = document.createElement('div');
+      chEl.className = 'chapter-link';
 
-      const chaptersDiv = document.getElementById('chapters');
-
-      if (error || !chapters || chapters.length === 0) {
-        chaptersDiv.innerHTML = '<p>No chapters found or error loading.</p>';
-        return;
-      }
-
-      for (const ch of chapters) {
-        const chEl = document.createElement('div');
-        chEl.className = 'chapter-link';
-
-        if (ch.coin_cost > 0 && !isLoggedIn) {
-          chEl.classList.add('locked');
-          chEl.innerHTML = `🔒 <strong>${ch.title}</strong><div class="login-note">Login required to unlock</div>`;
-          chEl.onclick = () => {
-            window.location.href = 'auth.html';
-          };
-        } else {
-          chEl.innerHTML = `
-  ${(ch.coin_cost > 0 ? '🔒' : '📖')} <strong>${ch.title}</strong><br>
-  <span style="font-size: 13px; color: #999;">👁️ ${formatNumber(ch.view_count || 0)} views</span>
-`;
-          chEl.onclick = () => {
-            window.location.href = `chapter.html?id=${ch.id}`;
-          };
+      if (ch.coin_cost > 0 && !isLoggedIn) {
+        chEl.classList.add('locked');
+        chEl.innerHTML = `🔒 <strong>${ch.title}</strong><div class="login-note">Login required to unlock</div>`;
+        chEl.onclick = () => {
+          window.location.href = 'auth.html';
+        };
+      } else {
+        let icon = '📖';
+        if (ch.coin_cost > 0) {
+          icon = unlockedChapterIds.includes(ch.id) ? '🔓🔸' : '🔒';
         }
 
-        chaptersDiv.appendChild(chEl);
+        chEl.innerHTML = `
+          ${icon} <strong>${ch.title}</strong><br>
+          <span style="font-size: 13px; color: #999;">👁️ ${formatNumber(ch.view_count || 0)} views</span>
+        `;
+        chEl.onclick = () => {
+          window.location.href = `chapter.html?id=${ch.id}`;
+        };
       }
+
+      chaptersDiv.appendChild(chEl);
     }
-  </script>
-</body>
+  }
+
+  checkSessionAndLoad();
+</script>
+
+  </body>
 </html>
