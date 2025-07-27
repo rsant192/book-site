@@ -148,46 +148,51 @@
     }
 
     async function loadBooks() {
-      const { data: books, error } = await supabase.from('books').select('*');
-      const booksDiv = document.getElementById('books');
+  const { data: books, error } = await supabase.from('books').select('*');
+  const booksDiv = document.getElementById('books');
 
-      if (error || !books || books.length === 0) {
-        booksDiv.innerHTML = '<p>❌ No books found.</p>';
-        return;
-      }
+  if (error || !books || books.length === 0) {
+    booksDiv.innerHTML = '<p>❌ No books found.</p>';
+    return;
+  }
 
-      for (const book of books) {
-        const bookEl = document.createElement('div');
-        bookEl.className = "book";
-        bookEl.onclick = () => {
-          window.location.href = `book.html?id=${book.id}`;
-        };
+  for (const book of books) {
+    // 🔸 Fetch chapters with view_count for this book
+    const { data: chapters } = await supabase
+      .from('chapters')
+      .select('view_count, id, coin_cost')
+      .eq('book_id', book.id);
 
-        const freeChapters = await supabase
-          .from('chapters')
-          .select('id, coin_cost')
-          .eq('book_id', book.id)
-          .eq('coin_cost', 0);
+    const totalViews = chapters?.reduce((sum, ch) => sum + (ch.view_count || 0), 0) || 0;
 
-        let freePreview = '';
-        if (freeChapters.data && freeChapters.data.length > 0) {
-          const firstFree = freeChapters.data[0];
-          freePreview = `<p class="chapter-preview"><a href="chapter.html?id=${firstFree.id}" style="color: green; text-decoration: underline;">Read Free Chapter</a></p>`;
-        }
+    // 🔸 Get first free chapter for preview button
+    const firstFree = chapters?.find(ch => ch.coin_cost === 0);
 
-        bookEl.innerHTML = `
-          <img src="${book.cover || 'placeholder.jpg'}" class="book-cover" alt="Cover">
-          <div class="book-info">
-            <h2>${book.title}</h2>
-            <p class="book-description">${book.description || ''}</p>
-            ${book.writer_notes ? `<p class="writer-notes">✍️ ${book.writer_notes}</p>` : ''}
-            ${freePreview}
-          </div>
-        `;
+    const bookEl = document.createElement('div');
+    bookEl.className = "book";
+    bookEl.onclick = () => {
+      window.location.href = `book.html?id=${book.id}`;
+    };
 
-        booksDiv.appendChild(bookEl);
-      }
+    let freePreview = '';
+    if (firstFree) {
+      freePreview = `<p class="chapter-preview"><a href="chapter.html?id=${firstFree.id}" style="color: green; text-decoration: underline;">Read Free Chapter</a></p>`;
     }
+
+    bookEl.innerHTML = `
+      <img src="${book.cover || 'placeholder.jpg'}" class="book-cover" alt="Cover">
+      <div class="book-info">
+        <h2>${book.title}</h2>
+        <p style="font-size: 14px; color: #555;">👁️ ${totalViews.toLocaleString()} views</p>
+        <p class="book-description">${book.description || ''}</p>
+        ${book.writer_notes ? `<p class="writer-notes">✍️ ${book.writer_notes}</p>` : ''}
+        ${freePreview}
+      </div>
+    `;
+
+    booksDiv.appendChild(bookEl);
+  }
+}
 
     checkSessionAndLoadBooks();
   </script>
