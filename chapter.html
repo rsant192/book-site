@@ -242,7 +242,17 @@ if (!error && chapter) {
       .update({ view_count: (chapter.view_count || 0) + 1 })
       .eq('id', currentChapterId);
   }
+const lockIcon = document.getElementById("lock-status-icon");
+if (lockIcon) {
+  if (isFree || isUnlocked) {
+    lockIcon.textContent = "🔓🔸";
+    lockIcon.className = "unlocked";
+  } else {
+    lockIcon.textContent = "🔒";
+    lockIcon.className = "locked";
+  }
 }
+
 
       if (error || !chapter) {
         container.innerHTML = "<p>❌ Error loading chapter.</p>";
@@ -255,11 +265,27 @@ if (!error && chapter) {
         if (!unlocked) return showUnlockModal(chapter);
       }
 
-   container.innerHTML = `
-  <h1>${chapter.title}</h1>
+      container.innerHTML = `
+  <h1 style="display:flex; align-items:center; gap:10px;">
+    ${chapter.title}
+    <span id="lock-status-icon" class="${chapter.locked ? 'locked' : 'unlocked'}">
+      ${chapter.locked ? '🔒' : '🔓🔸'}
+    </span>
+  </h1>
+
   ${chapter.audio_url ? `<audio controls style="margin-bottom: 20px; width: 100%;"><source src="${chapter.audio_url}" type="audio/mpeg">Your browser does not support the audio element.</audio>` : ''}
   <div style="white-space: pre-wrap; line-height: 1.7;">${chapter.content}</div>`;
 
+const lockIcon = document.getElementById("lock-status-icon");
+if (lockIcon) {
+  if (!chapter.locked || chapter.coin_cost === 0 || (userId && await unlockChapterIfNeeded(chapter.id))) {
+    lockIcon.textContent = "🔓🔸";
+    lockIcon.className = "unlocked";
+  } else {
+    lockIcon.textContent = "🔒";
+    lockIcon.className = "locked";
+  }
+}
 
       const chapterListBtn = document.getElementById('chapterListBtn');
       chapterListBtn.style.display = 'block';

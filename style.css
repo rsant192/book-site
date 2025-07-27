@@ -371,3 +371,15 @@ img {
   z-index: 2;
 }
 
+
+#lock-status-icon {
+  font-size: 22px;
+  font-weight: bold;
+}
+.unlocked {
+  color: green;
+}
+.locked {
+  color: red;
+}
+
