@@ -36,7 +36,9 @@ body {
   max-width: 900px;
   margin: auto;
   box-sizing: border-box;
+  background: linear-gradient(to bottom right, #fdfbfb, #ebedee);
 }
+
 
 /* BOOK and CHAPTER LIST ITEMS */
 .book, .chapter {
