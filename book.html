@@ -131,7 +131,7 @@
       .from('chapters')
       .select('*')
       .eq('book_id', bookId)
-      .order('chapter_number', { ascending: true })
+      .order('chapter_number', { ascending: true });
     if (error || !data || data.length === 0) {
       document.getElementById('chapters').innerHTML = '<p>No chapters found.</p>';
       return;
