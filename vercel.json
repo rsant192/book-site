@@ -26,5 +26,10 @@
       ],
       "permanent": true
     }
+  ],
+  "rewrites": [
+    { "source": "/book", "destination": "/book.html" },
+    { "source": "/chapter", "destination": "/chapter.html" },
+    { "source": "/wallet", "destination": "/wallet.html" }
   ]
 }
