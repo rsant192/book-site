@@ -3,20 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login / Signup</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Login – MyBookSeries.org</title>
+
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Secure login and signup page for readers of MyBookSeries.org. All logins are handled through Supabase authentication.">
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 400px;
+      margin: 40px auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background-color: #fafafa;
+    }
+    h1 {
+      font-size: 24px;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-weight: bold;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .info {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    footer {
+      font-size: 12px;
+      margin-top: 30px;
+      text-align: center;
+      color: #999;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <h1>🔐 Login or Sign Up</h1>
+  <h1>🔐 MyBookSeries Login</h1>
+  <p class="info">
+    This secure login is used to unlock chapters on MyBookSeries.org.<br>
+    Your information is handled by <strong>Supabase Authentication</strong>.<br>
+    We never ask for any payment or personal information beyond email.
+  </p>
 
-  <input id="email" type="email" placeholder="Email" /><br /><br />
-  <input id="password" type="password" placeholder="Password" /><br /><br />
+  <input id="email" type="email" placeholder="Email address" required />
+  <input id="password" type="password" placeholder="Password" required />
 
   <button onclick="login()">Login</button>
   <button onclick="signup()">Sign Up</button>
 
-  <p id="message"></p>
+  <p id="message" style="text-align:center; font-size: 14px; color: #555;"></p>
+
+  <footer>
+    📚 <a href="index.html">Back to Home</a> |
+    🔒 <a href="privacy.html">Privacy Policy</a> |
+    ✉️ <a href="mailto:support@mybookseries.org">Contact Us</a>
+  </footer>
 
   <script>
     const supabase = window.supabase.createClient(
